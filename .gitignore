@@ -15,3 +15,5 @@ services/*/prisma/*.db
 services/bus-service/generated/
 uploads/
 
+
+.vercel
