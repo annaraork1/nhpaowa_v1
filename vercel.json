@@ -3,9 +3,33 @@
   "version": 2,
   "framework": null,
   "installCommand": "npm ci",
-  "buildCommand": "npm run build -w @nhpaowa/web",
+  "buildCommand": "npm run vercel:build",
   "outputDirectory": "apps/web/dist",
   "rewrites": [
+    {
+      "source": "/api/auth/:path*",
+      "destination": "/api/identity-service"
+    },
+    {
+      "source": "/api/inventory/:path*",
+      "destination": "/api/inventory-service"
+    },
+    {
+      "source": "/api/association/:path*",
+      "destination": "/api/inventory-service"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "/api/inventory-service"
+    },
+    {
+      "source": "/api/bus/:path*",
+      "destination": "/api/bus-service"
+    },
+    {
+      "source": "/api/cron",
+      "destination": "/api/cron"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
@@ -34,5 +58,21 @@
         }
       ]
     }
-  ]
+  ],
+  "crons": [
+    {
+      "path": "/api/cron?job=inventory",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron?job=bus",
+      "schedule": "*/5 * * * *"
+    }
+  ],
+  "functions": {
+    "api/**/*.js": {
+      "includeFiles": "{services,packages,node_modules/@prisma,node_modules/.prisma}/**",
+      "maxDuration": 60
+    }
+  }
 }
