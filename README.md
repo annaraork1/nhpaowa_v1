@@ -9,7 +9,9 @@ Association-owned platform monorepo. Modules include **Inventory**, **Associatio
 - React + Vite + Tailwind (web shell + PWA)
 - Expo (mobile)
 - Identity (`:4000`) · Inventory (`:4001`) · Bus (`:4002`) + JWT via `packages/shared-auth`
-- Netlify config ready (`netlify.toml`) for later SPA deploy
+- Vercel fullstack deploy (`vercel.json` + `api/*`) — production: https://nhpaowa-v1.vercel.app
+- GitHub: https://github.com/annaraork1/nhpaowa_v1 (connected to Vercel for git deploys)
+- Netlify config (`netlify.toml`) still available for SPA-only hosting
 
 ## Local setup
 

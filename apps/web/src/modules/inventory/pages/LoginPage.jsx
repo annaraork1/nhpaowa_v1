@@ -146,10 +146,12 @@ export default function LoginPage() {
               disabled={busy}
               title="Sign in as Secretary, then Flat owners → CSV import / Flat self-updates"
               className="rounded-md border border-border bg-surface px-2.5 py-1.5 text-left text-xs text-ink hover:border-accent hover:bg-accent/5 disabled:opacity-50"
-              onClick={() => {
-                setEmail('secretary@nhpaowa.local');
-                setPassword(DEMO_PASSWORD);
-              }}
+              onClick={() =>
+                quickLogin({
+                  label: 'Secretary',
+                  email: 'secretary@nhpaowa.local',
+                })
+              }
             >
               <span className="font-medium">5. Staff CSV / approve</span>
               <span className="mt-0.5 block text-[10px] text-muted">
