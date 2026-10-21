@@ -61,12 +61,8 @@
   ],
   "crons": [
     {
-      "path": "/api/cron?job=inventory",
+      "path": "/api/cron?job=all",
       "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/cron?job=bus",
-      "schedule": "*/5 * * * *"
     }
   ],
   "functions": {

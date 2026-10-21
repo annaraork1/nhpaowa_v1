@@ -81,10 +81,8 @@ if (mode === 'vercel-fullstack') {
       { source: '/(.*)', destination: '/index.html' },
     ],
     headers: spaHeaders,
-    crons: [
-      { path: '/api/cron?job=inventory', schedule: '0 2 * * *' },
-      { path: '/api/cron?job=bus', schedule: '*/5 * * * *' },
-    ],
+    // Hobby: max one cron run per day. Pro can add a frequent bus job.
+    crons: [{ path: '/api/cron?job=all', schedule: '0 2 * * *' }],
     functions: {
       'api/**/*.js': {
         includeFiles: '{services,packages,node_modules/@prisma,node_modules/.prisma}/**',
