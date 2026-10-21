@@ -1,0 +1,851 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Direct/session URL for migrate/db push (Supabase pooler cannot run migrations).
+  // Local Docker: set the same value as DATABASE_URL.
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+enum ItemStatus {
+  IN_STOCK
+  LOW_STOCK
+  OUT_OF_STOCK
+}
+
+enum PoStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  ORDERED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CLOSED
+  CANCELLED
+}
+
+enum StockTxnType {
+  IN
+  OUT
+}
+
+enum StockReferenceType {
+  PURCHASE_ORDER
+  MANUAL
+  ADJUSTMENT
+  ISSUE
+}
+
+enum AmcStatus {
+  ACTIVE
+  EXPIRED
+  RENEWED
+}
+
+enum AlertType {
+  LOW_STOCK
+  PO_DUE
+  AMC_EXPIRY
+  STOCK_RECEIVED
+  NEW_SUPPLIER
+  NOTICE_PUBLISHED
+  BUS_UNMATCHED_TRIP
+  BUS_LONG_WAIT
+  BUS_OFF_SLOT
+  BUS_BATCH_CAPACITY
+  BUS_AM_PM_MISMATCH
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model AssociationSetting {
+  id                  String   @id @default(uuid()) @db.Uuid
+  associationId       String   @unique @map("association_id") @db.Uuid
+  poApprovalThreshold Decimal  @default(10000.00) @map("po_approval_threshold") @db.Decimal(12, 2)
+  autoPrOnLowStock    Boolean  @default(false) @map("auto_pr_on_low_stock")
+  defaultWarehouseId  String?  @map("default_warehouse_id") @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("association_settings")
+}
+
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  associationId String    @map("association_id") @db.Uuid
+  email         String
+  passwordHash  String    @map("password_hash")
+  name          String
+  role          String
+  supplierId    String?   @map("supplier_id") @db.Uuid
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+
+  @@unique([associationId, email])
+  @@index([associationId])
+  @@map("users")
+}
+
+/// Superadmin-assigned left-nav features per role (025-ops-roles-home-ux)
+model RoleMenuAccess {
+  id            String   @id @default(uuid()) @db.Uuid
+  associationId String   @map("association_id") @db.Uuid
+  role          String
+  resource      String
+  enabled       Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([associationId, role, resource])
+  @@index([associationId, role])
+  @@map("role_menu_access")
+}
+
+model Warehouse {
+  id            String           @id @default(uuid()) @db.Uuid
+  associationId String           @map("association_id") @db.Uuid
+  code          String
+  name          String
+  address       String?
+  isDefault     Boolean          @default(false) @map("is_default")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  deletedAt     DateTime?        @map("deleted_at")
+  stocks        WarehouseStock[]
+  transactions  StockTransaction[]
+
+  @@unique([associationId, code])
+  @@index([associationId])
+  @@map("warehouses")
+}
+
+model WarehouseStock {
+  id          String    @id @default(uuid()) @db.Uuid
+  warehouseId String    @map("warehouse_id") @db.Uuid
+  itemId      String    @map("item_id") @db.Uuid
+  quantity    Decimal   @default(0) @db.Decimal(14, 3)
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  item        Item      @relation(fields: [itemId], references: [id])
+
+  @@unique([warehouseId, itemId])
+  @@index([itemId])
+  @@map("warehouse_stocks")
+}
+
+model Category {
+  id            String    @id @default(uuid()) @db.Uuid
+  associationId String    @map("association_id") @db.Uuid
+  name          String
+  description   String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  items         Item[]
+
+  @@index([associationId])
+  @@map("categories")
+}
+
+model Item {
+  id              String               @id @default(uuid()) @db.Uuid
+  associationId   String               @map("association_id") @db.Uuid
+  categoryId      String               @map("category_id") @db.Uuid
+  name            String
+  sku             String
+  barcode         String?
+  unit            String
+  currentStock    Decimal              @default(0) @map("current_stock") @db.Decimal(14, 3)
+  minStockLevel   Decimal              @default(0) @map("min_stock_level") @db.Decimal(14, 3)
+  unitPrice       Decimal              @default(0) @map("unit_price") @db.Decimal(12, 2)
+  photoUrl        String?              @map("photo_url")
+  preferredSupplierId String?          @map("preferred_supplier_id") @db.Uuid
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  deletedAt       DateTime?            @map("deleted_at")
+  category        Category             @relation(fields: [categoryId], references: [id])
+  preferredSupplier Supplier?          @relation("ItemPreferredSupplier", fields: [preferredSupplierId], references: [id])
+  purchaseOrderItems PurchaseOrderItem[]
+  stockTransactions  StockTransaction[]
+  warehouseStocks    WarehouseStock[]
+  amcContracts       AmcContract[]
+  purchaseRequisitions PurchaseRequisition[]
+
+  @@unique([associationId, sku])
+  @@unique([associationId, barcode])
+  @@index([associationId])
+  @@index([categoryId])
+  @@map("items")
+}
+
+model Supplier {
+  id            String          @id @default(uuid()) @db.Uuid
+  associationId String          @map("association_id") @db.Uuid
+  name          String
+  contactPerson String?         @map("contact_person")
+  phone         String?
+  email         String?
+  address       String?
+  gstNumber     String?         @map("gst_number")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  deletedAt     DateTime?       @map("deleted_at")
+  purchaseOrders PurchaseOrder[]
+  amcContracts   AmcContract[]
+  users          User[]
+  preferredItems Item[]         @relation("ItemPreferredSupplier")
+  purchaseRequisitions PurchaseRequisition[]
+
+  @@index([associationId])
+  @@map("suppliers")
+}
+
+model PurchaseOrder {
+  id            String              @id @default(uuid()) @db.Uuid
+  associationId String              @map("association_id") @db.Uuid
+  poNumber      String              @map("po_number")
+  supplierId    String              @map("supplier_id") @db.Uuid
+  status        PoStatus            @default(DRAFT)
+  orderDate     DateTime?           @map("order_date") @db.Date
+  expectedDate  DateTime?           @map("expected_date") @db.Date
+  totalAmount   Decimal             @default(0) @map("total_amount") @db.Decimal(12, 2)
+  createdBy     String              @map("created_by") @db.Uuid
+  approvedBy    String?             @map("approved_by") @db.Uuid
+  isEmergency   Boolean             @default(false) @map("is_emergency")
+  emergencyReason String?           @map("emergency_reason")
+  pendingPostApproval Boolean       @default(false) @map("pending_post_approval")
+  postApprovedBy String?            @map("post_approved_by") @db.Uuid
+  postApprovedAt DateTime?          @map("post_approved_at")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+  supplier      Supplier            @relation(fields: [supplierId], references: [id])
+  items         PurchaseOrderItem[]
+
+  @@unique([associationId, poNumber])
+  @@index([associationId])
+  @@index([supplierId])
+  @@index([status])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id               String        @id @default(uuid()) @db.Uuid
+  purchaseOrderId  String        @map("purchase_order_id") @db.Uuid
+  itemId           String        @map("item_id") @db.Uuid
+  quantity         Decimal       @db.Decimal(14, 3)
+  unitPrice        Decimal       @map("unit_price") @db.Decimal(12, 2)
+  subtotal         Decimal       @db.Decimal(12, 2)
+  quantityReceived Decimal       @default(0) @map("quantity_received") @db.Decimal(14, 3)
+  purchaseOrder    PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  item             Item          @relation(fields: [itemId], references: [id])
+
+  @@index([purchaseOrderId])
+  @@index([itemId])
+  @@map("purchase_order_items")
+}
+
+model StockTransaction {
+  id              String             @id @default(uuid()) @db.Uuid
+  associationId   String             @map("association_id") @db.Uuid
+  itemId          String             @map("item_id") @db.Uuid
+  warehouseId     String?            @map("warehouse_id") @db.Uuid
+  type            StockTxnType
+  quantity        Decimal            @db.Decimal(14, 3)
+  stockBefore     Decimal?           @map("stock_before") @db.Decimal(14, 3)
+  stockAfter      Decimal?           @map("stock_after") @db.Decimal(14, 3)
+  referenceType   StockReferenceType @map("reference_type")
+  referenceId     String?            @map("reference_id") @db.Uuid
+  performedBy     String             @map("performed_by") @db.Uuid
+  performedByName String?            @map("performed_by_name")
+  notes           String?
+  department      String?
+  transactionDate DateTime           @default(now()) @map("transaction_date")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  item            Item               @relation(fields: [itemId], references: [id])
+  warehouse       Warehouse?         @relation(fields: [warehouseId], references: [id])
+
+  @@index([associationId])
+  @@index([itemId])
+  @@index([warehouseId])
+  @@index([transactionDate])
+  @@map("stock_transactions")
+}
+
+enum PrStatus {
+  DRAFT
+  CONVERTED
+  CANCELLED
+}
+
+enum PrSource {
+  LOW_STOCK
+  MANUAL
+}
+
+model PurchaseRequisition {
+  id                  String    @id @default(uuid()) @db.Uuid
+  associationId       String    @map("association_id") @db.Uuid
+  prNumber            String    @map("pr_number")
+  itemId              String    @map("item_id") @db.Uuid
+  quantity            Decimal   @db.Decimal(14, 3)
+  preferredSupplierId String?   @map("preferred_supplier_id") @db.Uuid
+  status              PrStatus  @default(DRAFT)
+  source              PrSource  @default(MANUAL)
+  notes               String?
+  purchaseOrderId     String?   @map("purchase_order_id") @db.Uuid
+  createdBy           String?   @map("created_by") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  item                Item      @relation(fields: [itemId], references: [id])
+  preferredSupplier   Supplier? @relation(fields: [preferredSupplierId], references: [id])
+
+  @@unique([associationId, prNumber])
+  @@index([associationId, status])
+  @@map("purchase_requisitions")
+}
+
+model AmcContract {
+  id                String    @id @default(uuid()) @db.Uuid
+  associationId     String    @map("association_id") @db.Uuid
+  itemId            String?   @map("item_id") @db.Uuid
+  vendorId          String    @map("vendor_id") @db.Uuid
+  description       String
+  startDate         DateTime  @map("start_date") @db.Date
+  endDate           DateTime  @map("end_date") @db.Date
+  reminderLeadDays  Int       @default(15) @map("reminder_lead_days")
+  status            AmcStatus @default(ACTIVE)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  item              Item?     @relation(fields: [itemId], references: [id])
+  vendor            Supplier  @relation(fields: [vendorId], references: [id])
+
+  @@index([associationId])
+  @@index([endDate])
+  @@map("amc_contracts")
+}
+
+model Alert {
+  id                String        @id @default(uuid()) @db.Uuid
+  associationId     String        @map("association_id") @db.Uuid
+  type              String
+  severity          AlertSeverity @default(INFO)
+  relatedEntityType String?       @map("related_entity_type")
+  relatedEntityId   String?       @map("related_entity_id") @db.Uuid
+  message           String
+  isRead            Boolean       @default(false) @map("is_read")
+  createdAt         DateTime      @default(now()) @map("created_at")
+
+  @@index([associationId, isRead])
+  @@index([createdAt])
+  @@map("alerts")
+}
+
+// --- Association operations (005–008) ---
+
+model Flat {
+  id                 String        @id @default(uuid()) @db.Uuid
+  associationId      String        @map("association_id") @db.Uuid
+  tower              String
+  flatNumber         String        @map("flat_number")
+  floor              Int?
+  apartmentType      String?       @map("apartment_type")
+  configuration      String?
+  superBuiltUpArea   Int?          @map("super_built_up_area")
+  parkingSlots       Int           @default(0) @map("parking_slots")
+  occupancyStatus    String        @default("VACANT") @map("occupancy_status")
+  /// SEED | P1_VERIFIED | P2_HOUSEHOLD — data-collection drive progress
+  collectionPhase    String        @default("SEED") @map("collection_phase")
+  notes              String?
+  /// Optional flat-level parking allotment letter (fallback if slot has none)
+  parkingLetterUrl          String?   @map("parking_letter_url")
+  parkingLetterOriginalName String?   @map("parking_letter_original_name")
+  parkingLetterUploadedAt   DateTime? @map("parking_letter_uploaded_at")
+  deletedAt          DateTime?     @map("deleted_at")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+  members            FlatMember[]
+  nocRequests        NocRequest[]
+  moveRequests       MoveRequest[]          @relation("MoveOrigin")
+  incomingMoves      MoveRequest[]          @relation("MoveDestination")
+  parkingAllotments  ParkingSlot[]
+  vehicles           FlatVehicle[]
+  pets               FlatPet[]
+  emergencyContacts  FlatEmergencyContact[]
+  accessDevices      FlatAccessDevice[]
+  selfUpdates        FlatSelfUpdate[]
+  updateSessions     FlatUpdateSession[]
+
+  @@unique([associationId, tower, flatNumber])
+  @@index([associationId])
+  @@index([associationId, apartmentType])
+  @@index([associationId, collectionPhase])
+  @@map("flats")
+}
+
+model FlatUpdateSession {
+  id            String   @id @default(uuid()) @db.Uuid
+  associationId String   @map("association_id") @db.Uuid
+  flatId        String   @map("flat_id") @db.Uuid
+  token         String   @unique
+  expiresAt     DateTime @map("expires_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  flat          Flat     @relation(fields: [flatId], references: [id])
+
+  @@index([associationId, flatId])
+  @@map("flat_update_sessions")
+}
+
+model FlatSelfUpdate {
+  id               String    @id @default(uuid()) @db.Uuid
+  associationId    String    @map("association_id") @db.Uuid
+  flatId           String    @map("flat_id") @db.Uuid
+  phase            String    @default("P1")
+  payload          Json
+  status           String    @default("PENDING")
+  rejectionReason  String?   @map("rejection_reason")
+  phoneLast4Used   String    @map("phone_last4_used")
+  reviewedAt       DateTime? @map("reviewed_at")
+  reviewedByUserId String?   @map("reviewed_by_user_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at")
+  flat             Flat      @relation(fields: [flatId], references: [id])
+
+  @@index([associationId, status])
+  @@index([flatId])
+  @@map("flat_self_updates")
+}
+
+model FlatMember {
+  id        String    @id @default(uuid()) @db.Uuid
+  flatId    String    @map("flat_id") @db.Uuid
+  role      String
+  name      String
+  phone     String
+  email     String?
+  userId    String?   @map("user_id") @db.Uuid
+  isActive  Boolean   @default(true) @map("is_active")
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  flat      Flat      @relation(fields: [flatId], references: [id])
+
+  @@index([flatId])
+  @@map("flat_members")
+}
+
+model ParkingSlot {
+  id            String         @id @default(uuid()) @db.Uuid
+  associationId String         @map("association_id") @db.Uuid
+  label         String
+  slotType      String         @default("COVERED") @map("slot_type")
+  flatId        String?        @map("flat_id") @db.Uuid
+  active        Boolean        @default(true)
+  /// Optional scan of the parking allotment letter for this bay
+  letterFileUrl          String?   @map("letter_file_url")
+  letterOriginalName     String?   @map("letter_original_name")
+  letterUploadedAt       DateTime? @map("letter_uploaded_at")
+  deletedAt     DateTime?      @map("deleted_at")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  flat          Flat?          @relation(fields: [flatId], references: [id])
+  vehicles      FlatVehicle[]
+
+  @@unique([associationId, label])
+  @@index([associationId, flatId])
+  @@map("parking_slots")
+}
+
+model FlatVehicle {
+  id                 String       @id @default(uuid()) @db.Uuid
+  flatId             String       @map("flat_id") @db.Uuid
+  vehicleType        String       @map("vehicle_type")
+  registrationNo     String       @map("registration_no")
+  make               String?
+  model              String?
+  color              String?
+  stickerNo          String?      @map("sticker_no")
+  rfidTag            String?      @map("rfid_tag")
+  parkingSlotId      String?      @map("parking_slot_id") @db.Uuid
+  rcFileUrl          String?      @map("rc_file_url")
+  notes              String?
+  approvalStatus     String       @default("APPROVED") @map("approval_status")
+  rejectionReason    String?      @map("rejection_reason")
+  submittedByUserId  String?      @map("submitted_by_user_id") @db.Uuid
+  deletedAt          DateTime?    @map("deleted_at")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+  flat               Flat         @relation(fields: [flatId], references: [id])
+  parkingSlot        ParkingSlot? @relation(fields: [parkingSlotId], references: [id])
+
+  @@index([flatId, approvalStatus])
+  @@index([registrationNo])
+  @@map("flat_vehicles")
+}
+
+model FlatPet {
+  id                String    @id @default(uuid()) @db.Uuid
+  flatId            String    @map("flat_id") @db.Uuid
+  species           String
+  name              String
+  breed             String?
+  gender            String?
+  notes             String?
+  rabiesValidTill   DateTime? @map("rabies_valid_till") @db.Date
+  vaccinationNotes  String?   @map("vaccination_notes")
+  approvalStatus    String    @default("APPROVED") @map("approval_status")
+  rejectionReason   String?   @map("rejection_reason")
+  submittedByUserId String?   @map("submitted_by_user_id") @db.Uuid
+  deletedAt         DateTime? @map("deleted_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  flat              Flat      @relation(fields: [flatId], references: [id])
+
+  @@index([flatId, approvalStatus])
+  @@map("flat_pets")
+}
+
+model FlatEmergencyContact {
+  id                String    @id @default(uuid()) @db.Uuid
+  flatId            String    @map("flat_id") @db.Uuid
+  name              String
+  phone             String
+  relationship      String?
+  isPrimary         Boolean   @default(false) @map("is_primary")
+  approvalStatus    String    @default("APPROVED") @map("approval_status")
+  rejectionReason   String?   @map("rejection_reason")
+  submittedByUserId String?   @map("submitted_by_user_id") @db.Uuid
+  deletedAt         DateTime? @map("deleted_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  flat              Flat      @relation(fields: [flatId], references: [id])
+
+  @@index([flatId, approvalStatus])
+  @@map("flat_emergency_contacts")
+}
+
+model FlatAccessDevice {
+  id                String    @id @default(uuid()) @db.Uuid
+  flatId            String    @map("flat_id") @db.Uuid
+  deviceType        String    @map("device_type")
+  identifier        String
+  status            String    @default("ACTIVE")
+  issuedAt          DateTime? @map("issued_at")
+  returnedAt        DateTime? @map("returned_at")
+  notes             String?
+  approvalStatus    String    @default("APPROVED") @map("approval_status")
+  rejectionReason   String?   @map("rejection_reason")
+  submittedByUserId String?   @map("submitted_by_user_id") @db.Uuid
+  deletedAt         DateTime? @map("deleted_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  flat              Flat      @relation(fields: [flatId], references: [id])
+
+  @@index([flatId, approvalStatus])
+  @@map("flat_access_devices")
+}
+
+model NocRequest {
+  id               String           @id @default(uuid()) @db.Uuid
+  associationId    String           @map("association_id") @db.Uuid
+  flatId           String           @map("flat_id") @db.Uuid
+  purpose          String
+  applicantName    String           @map("applicant_name")
+  applicantPhone   String?          @map("applicant_phone")
+  status           String           @default("DRAFT")
+  duesCleared      Boolean          @default(false) @map("dues_cleared")
+  validUntil       DateTime?        @map("valid_until") @db.Date
+  issuedAt         DateTime?        @map("issued_at")
+  issuedByName     String?          @map("issued_by_name")
+  rejectionReason  String?          @map("rejection_reason")
+  notes            String?
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  flat             Flat             @relation(fields: [flatId], references: [id])
+  statusEvents     NocStatusEvent[]
+  attachments      NocAttachment[]
+
+  @@index([associationId, status])
+  @@index([flatId])
+  @@map("noc_requests")
+}
+
+model NocStatusEvent {
+  id           String     @id @default(uuid()) @db.Uuid
+  nocRequestId String     @map("noc_request_id") @db.Uuid
+  fromStatus   String?    @map("from_status")
+  toStatus     String     @map("to_status")
+  actorUserId  String?    @map("actor_user_id") @db.Uuid
+  note         String?
+  createdAt    DateTime   @default(now()) @map("created_at")
+  nocRequest   NocRequest @relation(fields: [nocRequestId], references: [id])
+
+  @@index([nocRequestId])
+  @@map("noc_status_events")
+}
+
+model NocAttachment {
+  id               String     @id @default(uuid()) @db.Uuid
+  nocRequestId     String     @map("noc_request_id") @db.Uuid
+  label            String?
+  originalName     String     @map("original_name")
+  fileName         String     @map("file_name")
+  mimeType         String     @map("mime_type")
+  url              String
+  uploadedByUserId String?    @map("uploaded_by_user_id") @db.Uuid
+  createdAt        DateTime   @default(now()) @map("created_at")
+  deletedAt        DateTime?  @map("deleted_at")
+  nocRequest       NocRequest @relation(fields: [nocRequestId], references: [id])
+
+  @@index([nocRequestId])
+  @@map("noc_attachments")
+}
+
+model AssociationStaff {
+  id            String            @id @default(uuid()) @db.Uuid
+  associationId String            @map("association_id") @db.Uuid
+  name          String
+  category      String
+  phone         String?
+  tower         String?
+  designation   String?
+  photoUrl      String?           @map("photo_url")
+  userId        String?           @map("user_id") @db.Uuid
+  active        Boolean           @default(true)
+  deletedAt     DateTime?         @map("deleted_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  attendance    AttendanceEntry[]
+  leaves        StaffLeave[]
+  dayMarks      AttendanceDayMark[]
+
+  @@index([associationId, active])
+  @@index([associationId, category])
+  @@map("association_staff")
+}
+
+model StaffCategory {
+  id            String    @id @default(uuid()) @db.Uuid
+  associationId String    @map("association_id") @db.Uuid
+  code          String
+  label         String
+  sortOrder     Int       @default(0) @map("sort_order")
+  active        Boolean   @default(true)
+  deletedAt     DateTime? @map("deleted_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@unique([associationId, code])
+  @@index([associationId, active, sortOrder])
+  @@map("staff_categories")
+}
+
+model AttendanceEntry {
+  id               String           @id @default(uuid()) @db.Uuid
+  staffId          String           @map("staff_id") @db.Uuid
+  checkInAt        DateTime         @map("check_in_at")
+  checkOutAt       DateTime?        @map("check_out_at")
+  note             String?
+  recordedByUserId String?          @map("recorded_by_user_id") @db.Uuid
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  staff            AssociationStaff @relation(fields: [staffId], references: [id])
+
+  @@index([staffId, checkInAt])
+  @@map("attendance_entries")
+}
+
+model StaffLeave {
+  id               String           @id @default(uuid()) @db.Uuid
+  staffId          String           @map("staff_id") @db.Uuid
+  startDate        DateTime         @map("start_date") @db.Date
+  endDate          DateTime         @map("end_date") @db.Date
+  leaveType        String           @map("leave_type")
+  reason           String?
+  status           String           @default("APPROVED")
+  recordedByUserId String?          @map("recorded_by_user_id") @db.Uuid
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  staff            AssociationStaff @relation(fields: [staffId], references: [id])
+
+  @@index([staffId, startDate, endDate])
+  @@index([status])
+  @@map("staff_leaves")
+}
+
+/** Explicit day status marks (e.g. confirmed ABSENT) — see 016-attendance-daily-punch */
+model AttendanceDayMark {
+  id               String           @id @default(uuid()) @db.Uuid
+  staffId          String           @map("staff_id") @db.Uuid
+  date             DateTime         @db.Date
+  status           String           @default("ABSENT")
+  note             String?
+  recordedByUserId String?          @map("recorded_by_user_id") @db.Uuid
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  staff            AssociationStaff @relation(fields: [staffId], references: [id])
+
+  @@unique([staffId, date])
+  @@index([staffId, date])
+  @@map("attendance_day_marks")
+}
+
+model MoveRequest {
+  id                String            @id @default(uuid()) @db.Uuid
+  associationId     String            @map("association_id") @db.Uuid
+  flatId            String            @map("flat_id") @db.Uuid
+  destinationFlatId String?           @map("destination_flat_id") @db.Uuid
+  type              String
+  partyType         String            @map("party_type")
+  status            String            @default("REQUESTED")
+  scheduledDate     DateTime          @map("scheduled_date") @db.Date
+  contactName       String            @map("contact_name")
+  contactPhone      String            @map("contact_phone")
+  moverNotes        String?           @map("mover_notes")
+  checklistJson     Json?             @map("checklist_json")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  flat              Flat              @relation("MoveOrigin", fields: [flatId], references: [id])
+  destinationFlat   Flat?             @relation("MoveDestination", fields: [destinationFlatId], references: [id])
+  handover          MoveHandover?
+  statusEvents      MoveStatusEvent[]
+  attachments       MoveAttachment[]
+
+  @@index([associationId, status])
+  @@index([flatId, status])
+  @@index([destinationFlatId, status])
+  @@index([scheduledDate])
+  @@map("move_requests")
+}
+
+model MoveHandover {
+  id                String      @id @default(uuid()) @db.Uuid
+  moveRequestId     String      @unique @map("move_request_id") @db.Uuid
+  electricityMeter  String?     @map("electricity_meter")
+  waterMeter        String?     @map("water_meter")
+  keysCount         Int?        @map("keys_count")
+  accessCardsCount  Int?        @map("access_cards_count")
+  parkingTagsCount  Int?        @map("parking_tags_count")
+  notes             String?
+  completedAt       DateTime    @default(now()) @map("completed_at")
+  moveRequest       MoveRequest @relation(fields: [moveRequestId], references: [id])
+
+  @@map("move_handovers")
+}
+
+model MoveStatusEvent {
+  id            String      @id @default(uuid()) @db.Uuid
+  moveRequestId String      @map("move_request_id") @db.Uuid
+  fromStatus    String?     @map("from_status")
+  toStatus      String      @map("to_status")
+  actorUserId   String?     @map("actor_user_id") @db.Uuid
+  note          String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+  moveRequest   MoveRequest @relation(fields: [moveRequestId], references: [id])
+
+  @@index([moveRequestId])
+  @@map("move_status_events")
+}
+
+model MoveAttachment {
+  id               String      @id @default(uuid()) @db.Uuid
+  moveRequestId    String      @map("move_request_id") @db.Uuid
+  label            String?
+  originalName     String      @map("original_name")
+  fileName         String      @map("file_name")
+  mimeType         String      @map("mime_type")
+  url              String
+  uploadedByUserId String?     @map("uploaded_by_user_id") @db.Uuid
+  createdAt        DateTime    @default(now()) @map("created_at")
+  deletedAt        DateTime?   @map("deleted_at")
+  moveRequest      MoveRequest @relation(fields: [moveRequestId], references: [id])
+
+  @@index([moveRequestId])
+  @@map("move_attachments")
+}
+
+// --- Resident notices (009) ---
+
+model Notice {
+  id                String              @id @default(uuid()) @db.Uuid
+  associationId     String              @map("association_id") @db.Uuid
+  title             String
+  body              String
+  category          String?
+  status            String              @default("DRAFT")
+  publishedAt       DateTime?           @map("published_at")
+  publishedByName   String?             @map("published_by_name")
+  publishedByUserId String?             @map("published_by_user_id") @db.Uuid
+  pdfFileName       String?             @map("pdf_file_name")
+  pdfPath           String?             @map("pdf_path")
+  createdByUserId   String?             @map("created_by_user_id") @db.Uuid
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  statusEvents      NoticeStatusEvent[]
+
+  @@index([associationId, status])
+  @@index([associationId, publishedAt])
+  @@map("notices")
+}
+
+model NoticeStatusEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  noticeId    String   @map("notice_id") @db.Uuid
+  fromStatus  String?  @map("from_status")
+  toStatus    String   @map("to_status")
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  note        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  notice      Notice   @relation(fields: [noticeId], references: [id])
+
+  @@index([noticeId])
+  @@map("notice_status_events")
+}
+
+// --- Board / office bearers (010) ---
+
+model OfficeBearerRole {
+  id                String               @id @default(uuid()) @db.Uuid
+  associationId     String               @map("association_id") @db.Uuid
+  name              String
+  code              String
+  sortOrder         Int                  @default(0) @map("sort_order")
+  showOnLetterhead  Boolean              @default(true) @map("show_on_letterhead")
+  isPresidentSigner Boolean              @default(false) @map("is_president_signer")
+  active            Boolean              @default(true)
+  deletedAt         DateTime?            @map("deleted_at")
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+  members           OfficeBearerMember[]
+
+  @@unique([associationId, code])
+  @@index([associationId, active, sortOrder])
+  @@map("office_bearer_roles")
+}
+
+model OfficeBearerMember {
+  id            String           @id @default(uuid()) @db.Uuid
+  associationId String           @map("association_id") @db.Uuid
+  roleId        String           @map("role_id") @db.Uuid
+  fullName      String           @map("full_name")
+  phone         String?
+  email         String?
+  notes         String?
+  sortOrder     Int              @default(0) @map("sort_order")
+  active        Boolean          @default(true)
+  deletedAt     DateTime?        @map("deleted_at")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  role          OfficeBearerRole @relation(fields: [roleId], references: [id])
+
+  @@index([associationId, active])
+  @@index([roleId])
+  @@map("office_bearer_members")
+}

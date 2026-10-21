@@ -1,0 +1,425 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Use solid hex CSS variables (not channel RGB) so text/background
+  always resolve in dark mode across browsers.
+*/
+:root {
+  color-scheme: light;
+  --brand: #8e248d;
+  --brand-soft: #a832a6;
+  --brand-muted: #c9a3c8;
+  --sidebar: #3a0f3a;
+  --sidebar-soft: #4d1550;
+  --sidebar-muted: #c9a3c8;
+  --surface: #f8f5f9;
+  --panel: #ffffff;
+  --ink: #1a0f1a;
+  --muted: #6b5a6b;
+  --line: #e8dde8;
+  --success: #16a34a;
+  --warning: #b45309;
+  --danger: #b91c1c;
+  --shadow: #1a0f1a;
+  --chart-tick: #6b5a6b;
+  --chart-grid: #e8dde8;
+  --chart-bar: #8e248d;
+  --input-bg: #ffffff;
+}
+
+html.dark,
+.dark {
+  color-scheme: dark;
+  --brand: #e8a0e4;
+  --brand-soft: #f0c0ee;
+  --brand-muted: #a0789e;
+  --sidebar: #120812;
+  --sidebar-soft: #241224;
+  --sidebar-muted: #e2d4e2;
+  --surface: #100c10;
+  --panel: #2a1f2a;
+  --ink: #faf6fa;
+  --muted: #d4c4d4;
+  --line: #5a405a;
+  --success: #86efac;
+  --warning: #fde68a;
+  --danger: #fca5a5;
+  --shadow: #000000;
+  --chart-tick: #e2d4e2;
+  --chart-grid: #5a405a;
+  --chart-bar: #e8a0e4;
+  --input-bg: #1a121a;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: 'DM Sans', Segoe UI, sans-serif;
+}
+
+#root {
+  min-height: 100vh;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition;
+    background-color: var(--brand);
+    color: #ffffff;
+  }
+  html.dark .btn-primary,
+  .dark .btn-primary {
+    color: #1a0f1a;
+  }
+  .btn-primary:hover {
+    background-color: var(--brand-soft);
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition border;
+    border-color: var(--line);
+    background-color: var(--panel);
+    color: var(--ink);
+  }
+  .btn-ghost:hover {
+    background-color: var(--surface);
+  }
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold transition;
+    background-color: var(--warning);
+    color: #1a0f1a;
+  }
+  .btn-accent:hover {
+    opacity: 0.9;
+  }
+  .input {
+    @apply w-full rounded-lg border px-3 py-2 text-sm outline-none;
+    border-color: var(--line);
+    background-color: var(--input-bg);
+    color: var(--ink);
+  }
+  .input:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 30%, transparent);
+  }
+  .label {
+    @apply mb-1 block text-xs font-semibold uppercase tracking-wide;
+    color: var(--muted);
+  }
+  .panel {
+    @apply rounded-xl border p-5;
+    border-color: var(--line);
+    background-color: var(--panel);
+    color: var(--ink);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--shadow) 6%, transparent),
+      0 8px 24px color-mix(in srgb, var(--shadow) 10%, transparent);
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .badge-ok {
+    background: color-mix(in srgb, var(--success) 18%, transparent);
+    color: var(--success);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 35%, transparent);
+  }
+  .badge-err {
+    background: color-mix(in srgb, var(--danger) 18%, transparent);
+    color: var(--danger);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--danger) 35%, transparent);
+  }
+  .badge-warn {
+    background: color-mix(in srgb, var(--warning) 18%, transparent);
+    color: var(--warning);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 35%, transparent);
+  }
+  .badge-brand {
+    background: color-mix(in srgb, var(--brand) 18%, transparent);
+    color: var(--brand);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 35%, transparent);
+  }
+  .badge-neutral {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .icon-box-brand {
+    background: color-mix(in srgb, var(--brand) 18%, transparent);
+    color: var(--brand);
+  }
+  .icon-box-ok {
+    background: color-mix(in srgb, var(--success) 18%, transparent);
+    color: var(--success);
+  }
+  .icon-box-warn {
+    background: color-mix(in srgb, var(--warning) 18%, transparent);
+    color: var(--warning);
+  }
+  .icon-box-err {
+    background: color-mix(in srgb, var(--danger) 18%, transparent);
+    color: var(--danger);
+  }
+  .icon-btn {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-lg transition disabled:opacity-40;
+  }
+  .icon-btn-default {
+    color: var(--muted);
+  }
+  .icon-btn-default:hover {
+    background: var(--surface);
+    color: var(--ink);
+  }
+  .icon-btn-brand {
+    color: var(--brand);
+  }
+  .icon-btn-brand:hover {
+    background: color-mix(in srgb, var(--brand) 12%, transparent);
+  }
+  .icon-btn-danger {
+    color: var(--danger);
+  }
+  .icon-btn-danger:hover {
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+  }
+  .tint-brand {
+    background: color-mix(in srgb, var(--brand) 12%, transparent);
+  }
+  .hover-tint-brand:hover {
+    background: color-mix(in srgb, var(--brand) 12%, transparent);
+    color: var(--brand);
+  }
+  .nav-item {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition;
+    color: var(--sidebar-muted);
+  }
+  .nav-item:hover {
+    background-color: rgb(255 255 255 / 0.08);
+    color: #fff;
+  }
+  .nav-item-active {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition;
+    background-color: var(--brand);
+    color: #ffffff;
+  }
+  html.dark .nav-item-active,
+  .dark .nav-item-active {
+    color: #1a0f1a;
+  }
+  .nav-item-active:hover {
+    background-color: var(--brand-soft);
+  }
+  .text-ok {
+    color: var(--success);
+  }
+  .text-warn {
+    color: var(--warning);
+  }
+  .text-err {
+    color: var(--danger);
+  }
+  .kpi-value {
+    color: var(--ink);
+  }
+}
+
+/* Hard guarantees for dark mode readability */
+html.dark,
+html.dark body,
+html.dark #root,
+html.dark main {
+  color: #faf6fa !important;
+  background-color: #100c10 !important;
+}
+
+html.dark .bg-surface {
+  background-color: #100c10 !important;
+}
+
+/* Sticky app header — always opaque so main content never shows through */
+.app-topbar {
+  background-color: #ffffff !important;
+  color: #1a0f1a;
+  border-color: #e8dde8 !important;
+  box-shadow: 0 1px 0 rgb(26 15 26 / 0.06);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  isolation: isolate;
+}
+
+html.dark .bg-panel,
+html.dark header,
+html.dark .app-topbar {
+  background-color: #2a1f2a !important;
+  color: #faf6fa !important;
+  border-color: #5a405a !important;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.35);
+}
+
+html.dark .panel {
+  background-color: #2a1f2a !important;
+  color: #faf6fa !important;
+  border-color: #5a405a !important;
+}
+
+html.dark thead,
+html.dark thead th,
+html.dark table thead,
+html.dark thead.bg-surface {
+  background-color: #1a121a !important;
+  color: #e2d4e2 !important;
+}
+
+html.dark .input,
+html.dark select,
+html.dark textarea {
+  background-color: #1a121a !important;
+  color: #faf6fa !important;
+  border-color: #6b4a6b !important;
+}
+
+html.dark .btn-ghost {
+  background-color: #1a121a !important;
+  color: #faf6fa !important;
+  border-color: #5a405a !important;
+}
+
+html.dark .btn-ghost:hover {
+  background-color: #100c10 !important;
+}
+
+html.dark .text-ink,
+html.dark .kpi-value,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark td,
+html.dark dd,
+html.dark p,
+html.dark li,
+html.dark label {
+  color: #faf6fa;
+}
+
+html.dark .text-muted,
+html.dark .label,
+html.dark thead,
+html.dark thead th,
+html.dark dt {
+  color: #e2d4e2 !important;
+}
+
+html.dark .text-brand,
+html.dark .icon-btn-brand {
+  color: #e8a0e4 !important;
+}
+
+html.dark .icon-btn-danger {
+  color: #fca5a5 !important;
+}
+
+html.dark .icon-btn-default {
+  color: #e2d4e2 !important;
+}
+
+html.dark .text-ok,
+html.dark .badge-ok {
+  color: #86efac !important;
+}
+
+html.dark .text-warn,
+html.dark .badge-warn {
+  color: #fde68a !important;
+}
+
+html.dark .text-err,
+html.dark .badge-err {
+  color: #fca5a5 !important;
+}
+
+html.dark .badge-brand {
+  color: #e8a0e4 !important;
+}
+
+html.dark .nav-item-active {
+  color: #1a0f1a !important;
+}
+
+html.dark tbody td {
+  color: #faf6fa !important;
+}
+
+html.dark .border-line {
+  border-color: #5a405a !important;
+}
+
+html.dark .recharts-cartesian-axis-tick text,
+html.dark .recharts-legend-item-text,
+html.dark .recharts-text {
+  fill: #e2d4e2 !important;
+}
+
+html.dark .recharts-cartesian-grid line {
+  stroke: #5a405a !important;
+}
+
+html.dark .recharts-default-tooltip {
+  background: #2a1f2a !important;
+  border: 1px solid #5a405a !important;
+  color: #faf6fa !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .recharts-default-tooltip,
+html.dark .recharts-default-tooltip * {
+  color: #faf6fa !important;
+}
+
+html.dark .recharts-tooltip-label {
+  color: #faf6fa !important;
+  font-weight: 600 !important;
+}
+
+html.dark .recharts-tooltip-item,
+html.dark .recharts-tooltip-item-name,
+html.dark .recharts-tooltip-item-value,
+html.dark .recharts-tooltip-item-separator {
+  color: #e2d4e2 !important;
+}
+
+html.dark .recharts-tooltip-cursor {
+  fill: rgba(232, 160, 228, 0.12) !important;
+}
+
+/* Opacity helpers previously using channel RGB */
+html.dark .bg-brand\/10,
+.dark .bg-brand\/10 {
+  background-color: color-mix(in srgb, var(--brand) 10%, transparent) !important;
+}
+html.dark .bg-brand\/15,
+.dark .bg-brand\/15 {
+  background-color: color-mix(in srgb, var(--brand) 15%, transparent) !important;
+}
+
+/* PWA / installed app: respect notch and home indicator */
+html {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior-y: none;
+  }
+}
+html.dark .hover\:bg-brand\/10:hover,
+.dark .hover\:bg-brand\/10:hover {
+  background-color: color-mix(in srgb, var(--brand) 10%, transparent) !important;
+}

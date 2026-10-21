@@ -1,0 +1,43 @@
+{
+  "name": "@nhpaowa/inventory-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file=../../.env src/index.js",
+    "start": "node --env-file=../../.env src/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name init",
+    "prisma:seed": "node --env-file=../../.env prisma/seed.js",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
+  },
+  "dependencies": {
+    "@nhpaowa/shared-auth": "*",
+    "@nhpaowa/shared-notifications": "*",
+    "@nhpaowa/shared-ui": "*",
+    "@prisma/client": "^6.5.0",
+    "@supabase/supabase-js": "^2.118.0",
+    "bcryptjs": "^2.4.3",
+    "bwip-js": "^4.5.1",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.2",
+    "pdfkit": "^0.16.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "prisma": "^6.5.0",
+    "supertest": "^7.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {},
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  },
+  "prisma": {
+    "seed": "node --env-file=../../.env prisma/seed.js"
+  }
+}

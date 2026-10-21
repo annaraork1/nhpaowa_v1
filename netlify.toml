@@ -1,0 +1,50 @@
+# Netlify wiring prepared for later deploy.
+# Local-first: run Docker Postgres + inventory-service + Vite web app.
+
+[build]
+  base = "."
+  command = "npm run build -w @nhpaowa/web"
+  publish = "apps/web/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# When inventory-service is hosted, proxy API calls:
+# [[redirects]]
+#   from = "/api/inventory/*"
+#   to = "https://YOUR_INVENTORY_API/:splat"
+#   status = 200
+#   force = true
+# [[redirects]]
+#   from = "/api/auth/*"
+#   to = "https://YOUR_IDENTITY_API/api/auth/:splat"
+#   status = 200
+#   force = true
+# [[redirects]]
+#   from = "/api/association/*"
+#   to = "https://YOUR_INVENTORY_API/api/association/:splat"
+#   status = 200
+#   force = true
+
+[dev]
+  command = "npm run dev:web"
+  targetPort = 5173
+  port = 8888
+  autoLaunch = false

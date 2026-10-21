@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="description" content="NHPAOWA — flats, NOC, inventory, and association operations." />
+    <meta name="application-name" content="NHPAOWA" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="NHPAOWA" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>NHPAOWA</title>
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('nhpaowa_theme');
+          if (!t) {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+          }
+          var root = document.documentElement;
+          if (t === 'dark') root.classList.add('dark');
+          else root.classList.remove('dark');
+          root.dataset.theme = t;
+          root.style.colorScheme = t;
+          var dark = t === 'dark';
+          var vars = dark
+            ? {
+                '--brand': '#e8a0e4',
+                '--brand-soft': '#f0c0ee',
+                '--brand-muted': '#a0789e',
+                '--sidebar': '#120812',
+                '--sidebar-soft': '#241224',
+                '--sidebar-muted': '#e2d4e2',
+                '--surface': '#100c10',
+                '--panel': '#2a1f2a',
+                '--ink': '#faf6fa',
+                '--muted': '#d4c4d4',
+                '--line': '#5a405a',
+                '--success': '#86efac',
+                '--warning': '#fde68a',
+                '--danger': '#fca5a5',
+                '--shadow': '#000000',
+                '--chart-tick': '#e2d4e2',
+                '--chart-grid': '#5a405a',
+                '--chart-bar': '#e8a0e4',
+                '--input-bg': '#1a121a',
+              }
+            : {
+                '--brand': '#8e248d',
+                '--brand-soft': '#a832a6',
+                '--brand-muted': '#c9a3c8',
+                '--sidebar': '#3a0f3a',
+                '--sidebar-soft': '#4d1550',
+                '--sidebar-muted': '#c9a3c8',
+                '--surface': '#f8f5f9',
+                '--panel': '#ffffff',
+                '--ink': '#1a0f1a',
+                '--muted': '#6b5a6b',
+                '--line': '#e8dde8',
+                '--success': '#16a34a',
+                '--warning': '#b45309',
+                '--danger': '#b91c1c',
+                '--shadow': '#1a0f1a',
+                '--chart-tick': '#6b5a6b',
+                '--chart-grid': '#e8dde8',
+                '--chart-bar': '#8e248d',
+                '--input-bg': '#ffffff',
+              };
+          for (var k in vars) root.style.setProperty(k, vars[k]);
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#8E248D" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-surface text-ink">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

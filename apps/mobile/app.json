@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "NHPAOWA Inventory",
+    "slug": "nhpaowa-inventory",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nhpaowa.inventory"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#8E248D"
+      },
+      "package": "com.nhpaowa.inventory"
+    },
+    "extra": {
+      "apiBaseUrl": "http://localhost:4001/api/inventory"
+    }
+  }
+}

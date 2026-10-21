@@ -1,0 +1,166 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: nhpaowa-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: nhpaowa
+      POSTGRES_PASSWORD: nhpaowa
+      POSTGRES_DB: nhpaowa
+    volumes:
+      - nhpaowa_pgdata:/var/lib/postgresql/data
+      - ./docker/init-schemas.sql:/docker-entrypoint-initdb.d/01-schemas.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nhpaowa -d nhpaowa"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.node
+    container_name: nhpaowa-migrate
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql://nhpaowa:nhpaowa@postgres:5432/nhpaowa?schema=public
+      ASSOCIATION_ID: ${ASSOCIATION_ID:-00000000-0000-4000-8000-000000000001}
+      JWT_SECRET: ${JWT_SECRET:-nhpaowa-dev-secret-change-me}
+      SEED_ON_START: ${SEED_ON_START:-true}
+    working_dir: /app
+    entrypoint: ["/bin/sh", "/app/docker/migrate.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  identity:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.node
+    container_name: nhpaowa-identity
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://nhpaowa:nhpaowa@postgres:5432/nhpaowa?schema=public
+      IDENTITY_PORT: "4000"
+      ASSOCIATION_ID: ${ASSOCIATION_ID:-00000000-0000-4000-8000-000000000001}
+      JWT_SECRET: ${JWT_SECRET:-nhpaowa-dev-secret-change-me}
+      AUTH_STRICT: ${AUTH_STRICT:-true}
+    ports:
+      - "4000:4000"
+    working_dir: /app
+    command: ["node", "services/identity-service/src/index.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  inventory:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.node
+    container_name: nhpaowa-inventory
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://nhpaowa:nhpaowa@postgres:5432/nhpaowa?schema=public
+      INVENTORY_PORT: "4001"
+      ASSOCIATION_ID: ${ASSOCIATION_ID:-00000000-0000-4000-8000-000000000001}
+      JWT_SECRET: ${JWT_SECRET:-nhpaowa-dev-secret-change-me}
+      AUTH_STRICT: ${AUTH_STRICT:-true}
+      PO_APPROVAL_THRESHOLD: ${PO_APPROVAL_THRESHOLD:-10000.00}
+    ports:
+      - "4001:4001"
+    volumes:
+      - nhpaowa_uploads:/app/services/inventory-service/uploads
+    working_dir: /app
+    command: ["node", "services/inventory-service/src/index.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  bus:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.node
+    container_name: nhpaowa-bus
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://nhpaowa:nhpaowa@postgres:5432/nhpaowa?schema=public
+      BUS_PORT: "4002"
+      ASSOCIATION_ID: ${ASSOCIATION_ID:-00000000-0000-4000-8000-000000000001}
+      JWT_SECRET: ${JWT_SECRET:-nhpaowa-dev-secret-change-me}
+      AUTH_STRICT: ${AUTH_STRICT:-true}
+    ports:
+      - "4002:4002"
+    working_dir: /app
+    command: ["node", "services/bus-service/src/index.js"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4002/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  web:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+      args:
+        VITE_API_BASE_URL: /api/inventory
+        VITE_IDENTITY_BASE_URL: /api/auth
+    container_name: nhpaowa-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      identity:
+        condition: service_healthy
+      inventory:
+        condition: service_healthy
+      bus:
+        condition: service_healthy
+
+volumes:
+  nhpaowa_pgdata:
+  nhpaowa_uploads:

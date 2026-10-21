@@ -1,0 +1,19 @@
+FROM node:20-bookworm-slim
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY apps ./apps
+COPY services ./services
+COPY packages ./packages
+COPY docker/migrate.sh ./docker/migrate.sh
+
+RUN npm ci \
+  && npx prisma generate --schema=services/inventory-service/prisma/schema.prisma \
+  && npx prisma generate --schema=services/bus-service/prisma/schema.prisma
+
+ENV NODE_ENV=production

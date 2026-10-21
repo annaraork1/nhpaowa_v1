@@ -1,0 +1,16 @@
+{
+  "name": "nhpaowa-docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview",
+    "screenshots": "node scripts/capture-screenshots.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.48.0",
+    "vitepress": "^1.6.3"
+  }
+}

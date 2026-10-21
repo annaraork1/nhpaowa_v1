@@ -1,0 +1,35 @@
+{
+  "name": "nhpaowa-app",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:web": "npm run dev -w @nhpaowa/web",
+    "dev:inventory": "npm run dev -w @nhpaowa/inventory-service",
+    "dev:identity": "npm run dev -w @nhpaowa/identity-service",
+    "dev:bus": "npm run dev -w @nhpaowa/bus-service",
+    "dev:mobile": "npm run start -w @nhpaowa/mobile",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:bus:push": "npm run prisma:push -w @nhpaowa/bus-service",
+    "db:bus:seed": "npm run prisma:seed -w @nhpaowa/bus-service",
+    "docker:up": "docker compose --profile full up -d --build",
+    "docker:down": "docker compose --profile full down",
+    "docker:logs": "docker compose --profile full logs -f",
+    "db:migrate": "npm run prisma:migrate -w @nhpaowa/inventory-service",
+    "db:seed": "npm run prisma:seed -w @nhpaowa/inventory-service",
+    "db:reset": "node --env-file=.env scripts/reset-data.mjs",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "vercel:config": "node --env-file=.env scripts/generate-vercel-config.mjs",
+    "vercel:build": "npm run prisma:generate -w @nhpaowa/inventory-service && npm run prisma:generate -w @nhpaowa/bus-service && npm run build -w @nhpaowa/web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

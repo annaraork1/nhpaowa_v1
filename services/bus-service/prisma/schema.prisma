@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Direct/session URL for migrate/db push (Supabase pooler cannot run migrations).
+  // Local Docker: set the same value as DATABASE_URL.
+  directUrl = env("DATABASE_URL_UNPOOLED")
+  schemas   = ["bus_tracking"]
+}
+
+enum TripDirection {
+  PICKUP
+  DROPOFF
+
+  @@schema("bus_tracking")
+}
+
+model School {
+  id                   String    @id @default(uuid()) @db.Uuid
+  associationId        String    @map("association_id") @db.Uuid
+  name                 String
+  primaryContactName   String    @map("primary_contact_name")
+  primaryContactPhone  String    @map("primary_contact_phone")
+  address              String?
+  active               Boolean   @default(true)
+  deletedAt            DateTime? @map("deleted_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  buses                Bus[]
+
+  @@index([associationId, active])
+  @@map("schools")
+  @@schema("bus_tracking")
+}
+
+model Bus {
+  id                         String            @id @default(uuid()) @db.Uuid
+  associationId              String            @map("association_id") @db.Uuid
+  schoolId                   String            @map("school_id") @db.Uuid
+  vehicleRegistrationNumber  String            @map("vehicle_registration_number")
+  driverName                 String            @map("driver_name")
+  driverPhone                String            @map("driver_phone")
+  conductorName              String?           @map("conductor_name")
+  conductorPhone             String?           @map("conductor_phone")
+  seatingCapacity            Int?              @map("seating_capacity")
+  active                     Boolean           @default(true)
+  deletedAt                  DateTime?         @map("deleted_at")
+  createdAt                  DateTime          @default(now()) @map("created_at")
+  updatedAt                  DateTime          @updatedAt @map("updated_at")
+  school                     School            @relation(fields: [schoolId], references: [id])
+  slots                      BusSlot[]
+  trips                      GateTransaction[]
+
+  @@unique([associationId, vehicleRegistrationNumber])
+  @@index([associationId, active])
+  @@index([schoolId])
+  @@map("buses")
+  @@schema("bus_tracking")
+}
+
+model GateBatch {
+  id             String        @id @default(uuid()) @db.Uuid
+  associationId  String        @map("association_id") @db.Uuid
+  label          String
+  startTime      DateTime      @map("start_time") @db.Time(0)
+  endTime        DateTime      @map("end_time") @db.Time(0)
+  bayCapacity    Int           @default(3) @map("bay_capacity")
+  tripDirection  TripDirection @map("trip_direction")
+  active         Boolean       @default(true)
+  deletedAt      DateTime?     @map("deleted_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  slots          BusSlot[]
+
+  @@index([associationId, tripDirection, active])
+  @@map("gate_batches")
+  @@schema("bus_tracking")
+}
+
+model BusSlot {
+  id             String    @id @default(uuid()) @db.Uuid
+  associationId  String    @map("association_id") @db.Uuid
+  busId          String    @map("bus_id") @db.Uuid
+  batchId        String    @map("batch_id") @db.Uuid
+  assignedTime   DateTime  @map("assigned_time") @db.Time(0)
+  staggerOrder   Int       @default(0) @map("stagger_order")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  bus            Bus       @relation(fields: [busId], references: [id])
+  batch          GateBatch @relation(fields: [batchId], references: [id])
+
+  @@unique([busId, batchId])
+  @@index([associationId, batchId])
+  @@map("slots")
+  @@schema("bus_tracking")
+}
+
+model GateTransaction {
+  id                     String         @id @default(uuid()) @db.Uuid
+  associationId          String         @map("association_id") @db.Uuid
+  busId                  String         @map("bus_id") @db.Uuid
+  tripDate               DateTime       @map("trip_date") @db.Date
+  tripDirection          TripDirection  @map("trip_direction")
+  gateInAt               DateTime       @map("gate_in_at")
+  gateOutAt              DateTime?      @map("gate_out_at")
+  childCount             Int            @map("child_count")
+  loggedByUserId         String?        @map("logged_by_user_id") @db.Uuid
+  notes                  String?
+  correctsTransactionId  String?        @map("corrects_transaction_id") @db.Uuid
+  createdAt              DateTime       @default(now()) @map("created_at")
+  bus                    Bus            @relation(fields: [busId], references: [id])
+
+  @@index([associationId, tripDate])
+  @@index([busId, tripDate, tripDirection])
+  @@index([associationId, gateOutAt])
+  @@map("gate_transactions")
+  @@schema("bus_tracking")
+}
+
+model BusSetting {
+  id                   String   @id @default(uuid()) @db.Uuid
+  associationId        String   @unique @map("association_id") @db.Uuid
+  longWaitMinutes      Int      @default(5) @map("long_wait_minutes")
+  offSlotBufferMinutes Int      @default(5) @map("off_slot_buffer_minutes")
+  unmatchedCutoffTime  DateTime @default(dbgenerated("'20:00:00'::time")) @map("unmatched_cutoff_time") @db.Time(0)
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+  @@schema("bus_tracking")
+}
