@@ -2,7 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { api } from '../../inventory/api/client.js';
 import { can } from '../../inventory/auth/permissions.js';
-import { EmptyState, PageHeader } from '../../inventory/components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+  pendingLabel,
+} from '../../inventory/components/ui.jsx';
 
 export default function FlatSelfUpdatesPage() {
   const qc = useQueryClient();
@@ -110,6 +115,8 @@ export default function FlatSelfUpdatesPage() {
       <h2 className="mb-2 text-base font-semibold text-ink">
         Pending approvals
       </h2>
+      <QueryStatus query={list} empty="No pending updates." />
+      {rows.length ? (
       <div className="panel mb-6 overflow-x-auto p-0">
         <table className="w-full text-left text-sm">
           <thead>
@@ -160,22 +167,30 @@ export default function FlatSelfUpdatesPage() {
                         <button
                           type="button"
                           className="btn-primary"
-                          disabled={approve.isPending}
+                          disabled={approve.isPending || reject.isPending}
                           onClick={() => approve.mutate(r.id)}
                         >
-                          Approve
+                          {pendingLabel(
+                            approve.isPending,
+                            'Approve',
+                            'Approving…',
+                          )}
                         </button>
                         <button
                           type="button"
                           className="btn-ghost"
-                          disabled={reject.isPending}
+                          disabled={approve.isPending || reject.isPending}
                           onClick={() => {
                             const reason =
                               window.prompt('Rejection reason') || 'Rejected';
                             reject.mutate({ id: r.id, reason });
                           }}
                         >
-                          Reject
+                          {pendingLabel(
+                            reject.isPending,
+                            'Reject',
+                            'Rejecting…',
+                          )}
                         </button>
                       </div>
                     ) : null}
@@ -185,10 +200,8 @@ export default function FlatSelfUpdatesPage() {
             })}
           </tbody>
         </table>
-        {!rows.length && !list.isLoading ? (
-          <p className="px-3 py-4 text-sm text-muted">No pending updates.</p>
-        ) : null}
       </div>
+      ) : null}
 
       <div className="panel mb-6 space-y-2 p-4 text-sm">
         <p className="font-semibold text-ink">Household data (P2) — how to capture</p>

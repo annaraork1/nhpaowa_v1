@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client.js';
 import { Can } from '../auth/Can.jsx';
 import { RowActions } from '../components/RowActions.jsx';
-import { EmptyState, PageHeader } from '../components/ui.jsx';
+import { PageHeader, QueryStatus, pendingLabel } from '../components/ui.jsx';
 
 export default function CategoriesPage() {
   const qc = useQueryClient();
@@ -57,15 +57,22 @@ export default function CategoriesPage() {
               onChange={(e) => setDescription(e.target.value)}
             />
           </label>
-          <button className="btn-primary w-fit" type="submit">
-            {editing ? 'Save' : 'Add category'}
+          <button
+            className="btn-primary w-fit"
+            type="submit"
+            disabled={save.isPending}
+          >
+            {pendingLabel(
+              save.isPending,
+              editing ? 'Save' : 'Add category',
+              editing ? 'Saving…' : 'Adding…',
+            )}
           </button>
         </form>
       </Can>
 
-      {!list.data?.length ? (
-        <EmptyState message="No categories yet." />
-      ) : (
+      <QueryStatus query={list} empty="No categories yet." />
+      {list.data?.length ? (
         <div className="panel space-y-3">
           {list.data.map((c) => (
             <div
@@ -102,7 +109,8 @@ export default function CategoriesPage() {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
+

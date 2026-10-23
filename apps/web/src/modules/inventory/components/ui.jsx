@@ -45,6 +45,45 @@ export function EmptyState({ message }) {
   return <div className="panel py-12 text-center text-muted">{message}</div>;
 }
 
+/** Show Loading… before EmptyState so lists don’t flash empty during fetch. */
+export function QueryStatus({
+  query,
+  empty = 'Nothing here yet.',
+  loading = 'Loading…',
+  isEmpty,
+}) {
+  if (query?.isLoading || query?.isPending) {
+    return (
+      <div className="panel flex items-center justify-center gap-2 py-12 text-sm text-muted">
+        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+        {loading}
+      </div>
+    );
+  }
+  if (query?.isError) {
+    return (
+      <div className="panel py-12 text-center text-sm text-err">
+        {query.error?.message || 'Could not load data. Try again.'}
+      </div>
+    );
+  }
+  const emptyCheck =
+    typeof isEmpty === 'function'
+      ? isEmpty(query?.data)
+      : Array.isArray(query?.data)
+        ? !query.data.length
+        : query?.data == null;
+  if (emptyCheck) {
+    return <EmptyState message={empty} />;
+  }
+  return null;
+}
+
+/** Primary/ghost button label while a mutation runs. */
+export function pendingLabel(isPending, idle, pending = 'Saving…') {
+  return isPending ? pending : idle;
+}
+
 export function inr(n) {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',

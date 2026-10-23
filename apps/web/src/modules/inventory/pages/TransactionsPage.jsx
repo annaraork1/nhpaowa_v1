@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client.js';
-import { EmptyState, PageHeader } from '../components/ui.jsx';
+import { PageHeader, QueryStatus } from '../components/ui.jsx';
 import { StockTransactionsTable } from '../components/StockTransactionsTable.jsx';
 
 const TYPE_OPTIONS = [
@@ -144,15 +144,16 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {!list.isLoading && !rows.length ? (
-        <EmptyState
-          message={
-            filtersActive
-              ? 'No transactions match these filters.'
-              : 'No transactions yet.'
-          }
-        />
-      ) : rows.length ? (
+      <QueryStatus
+        query={list}
+        empty={
+          filtersActive
+            ? 'No transactions match these filters.'
+            : 'No transactions yet.'
+        }
+        isEmpty={() => !rows.length}
+      />
+      {rows.length ? (
         <div className="panel p-0 sm:p-3 md:p-0">
           <StockTransactionsTable
             rows={rows}

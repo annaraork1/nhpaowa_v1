@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client.js';
 import { Can } from '../auth/Can.jsx';
 import { can } from '../auth/permissions.js';
-import { PageHeader, inr } from '../components/ui.jsx';
+import { PageHeader, QueryStatus, inr, pendingLabel } from '../components/ui.jsx';
 
 export default function SettingsPage() {
   const qc = useQueryClient();
@@ -57,6 +57,8 @@ export default function SettingsPage() {
         title="Settings"
         subtitle="Association-level inventory configuration"
       />
+      <QueryStatus query={settings} empty="" isEmpty={() => false} />
+      {settings.data ? (
       <div className="panel max-w-lg space-y-4">
         <p className="text-sm text-muted">
           Current PO approval threshold:{' '}
@@ -116,7 +118,7 @@ export default function SettingsPage() {
               </select>
             </label>
             <button className="btn-primary" type="submit" disabled={save.isPending}>
-              Save settings
+              {pendingLabel(save.isPending, 'Save settings')}
             </button>
             {save.isError ? (
               <p className="text-sm text-err">{save.error.message}</p>
@@ -127,6 +129,7 @@ export default function SettingsPage() {
           </form>
         </Can>
       </div>
+      ) : null}
     </div>
   );
 }

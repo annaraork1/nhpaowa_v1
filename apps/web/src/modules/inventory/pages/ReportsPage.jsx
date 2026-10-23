@@ -5,7 +5,7 @@ import {
   addCalendarDaysYmd,
 } from '@nhpaowa/shared-ui';
 import { api } from '../api/client.js';
-import { PageHeader, inr } from '../components/ui.jsx';
+import { PageHeader, QueryStatus, inr } from '../components/ui.jsx';
 
 function defaultRange() {
   const to = associationCalendarYmd();
@@ -90,16 +90,19 @@ export default function ReportsPage() {
             onPdf={() => exportReport(api.reports.valuation, 'pdf')}
           />
         </div>
-        <ul className="space-y-2 text-sm">
-          {(valuation.data || []).slice(0, 12).map((r) => (
-            <li key={r.sku} className="flex justify-between gap-2">
-              <span>
-                {r.name} <span className="text-muted">({r.category})</span>
-              </span>
-              <span>{inr(r.value)}</span>
-            </li>
-          ))}
-        </ul>
+        <QueryStatus query={valuation} empty="No valuation rows." />
+        {valuation.data?.length ? (
+          <ul className="space-y-2 text-sm">
+            {valuation.data.slice(0, 12).map((r) => (
+              <li key={r.sku} className="flex justify-between gap-2">
+                <span>
+                  {r.name} <span className="text-muted">({r.category})</span>
+                </span>
+                <span>{inr(r.value)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </section>
 
       <section className="panel mb-6">
@@ -110,14 +113,17 @@ export default function ReportsPage() {
             onPdf={() => exportReport(api.reports.consumption, 'pdf')}
           />
         </div>
-        <ul className="space-y-2 text-sm">
-          {(consumption.data || []).map((r) => (
-            <li key={r.itemId} className="flex justify-between gap-2">
-              <span>{r.name}</span>
-              <span>{r.quantityOut}</span>
-            </li>
-          ))}
-        </ul>
+        <QueryStatus query={consumption} empty="No consumption in range." />
+        {consumption.data?.length ? (
+          <ul className="space-y-2 text-sm">
+            {consumption.data.map((r) => (
+              <li key={r.itemId} className="flex justify-between gap-2">
+                <span>{r.name}</span>
+                <span>{r.quantityOut}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </section>
 
       <section className="panel">
@@ -128,16 +134,19 @@ export default function ReportsPage() {
             onPdf={() => exportReport(api.reports.supplierSpend, 'pdf')}
           />
         </div>
-        <ul className="space-y-2 text-sm">
-          {(spend.data || []).map((r) => (
-            <li key={r.supplierId} className="flex justify-between gap-2">
-              <span>
-                {r.name} · {r.orderCount} orders
-              </span>
-              <span>{inr(r.totalSpend)}</span>
-            </li>
-          ))}
-        </ul>
+        <QueryStatus query={spend} empty="No supplier spend in range." />
+        {spend.data?.length ? (
+          <ul className="space-y-2 text-sm">
+            {spend.data.map((r) => (
+              <li key={r.supplierId} className="flex justify-between gap-2">
+                <span>
+                  {r.name} · {r.orderCount} orders
+                </span>
+                <span>{inr(r.totalSpend)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </section>
     </div>
   );

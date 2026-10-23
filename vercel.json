@@ -5,6 +5,7 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run vercel:build",
   "outputDirectory": "apps/web/dist",
+  "regions": ["hnd1"],
   "rewrites": [
     {
       "source": "/api/auth/:path*",

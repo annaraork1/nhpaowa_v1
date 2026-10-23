@@ -8,7 +8,13 @@ import {
   EntityCard,
   ResponsiveList,
 } from '../components/ResponsiveList.jsx';
-import { EmptyState, PageHeader, StatusBadge, inr } from '../components/ui.jsx';
+import {
+  PageHeader,
+  QueryStatus,
+  StatusBadge,
+  inr,
+  pendingLabel,
+} from '../components/ui.jsx';
 
 const blank = {
   name: '',
@@ -315,9 +321,18 @@ export default function ItemsPage() {
           </label>
           <div className="md:col-span-2 flex gap-2">
             <button className="btn-primary" type="submit" disabled={save.isPending}>
-              {editing ? 'Save' : 'Create'}
+              {pendingLabel(
+                save.isPending,
+                editing ? 'Save' : 'Create',
+                editing ? 'Saving…' : 'Creating…',
+              )}
             </button>
-            <button className="btn-ghost" type="button" onClick={() => setOpen(false)}>
+            <button
+              className="btn-ghost"
+              type="button"
+              disabled={save.isPending}
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </button>
             {save.isError ? (
@@ -327,15 +342,14 @@ export default function ItemsPage() {
         </form>
       ) : null}
 
-      {!items.isLoading && !rows.length ? (
-        <EmptyState
-          message={
-            filtersActive
-              ? 'No items match these filters.'
-              : 'No items yet.'
-          }
-        />
-      ) : rows.length ? (
+      <QueryStatus
+        query={items}
+        empty={
+          filtersActive ? 'No items match these filters.' : 'No items yet.'
+        }
+        isEmpty={() => !rows.length}
+      />
+      {rows.length ? (
         <div className="panel p-0">
           <ResponsiveList
             className="p-3 md:p-0"

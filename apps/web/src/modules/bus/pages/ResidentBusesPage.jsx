@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { busApi } from '../api.js';
 import { can } from '../../inventory/auth/permissions.js';
-import { EmptyState, PageHeader } from '../../inventory/components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+} from '../../inventory/components/ui.jsx';
 
 function StatusList({ title, rows }) {
   return (
@@ -57,10 +61,14 @@ export default function ResidentBusesPage() {
             : 'Campus school-bus schedule'
         }
       />
-      <div className="grid gap-4 md:grid-cols-2">
-        <StatusList title="Morning pickup" rows={today.data?.pickup} />
-        <StatusList title="Afternoon drop-off" rows={today.data?.dropoff} />
-      </div>
+      {today.isLoading ? (
+        <QueryStatus query={today} empty="" />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          <StatusList title="Morning pickup" rows={today.data?.pickup} />
+          <StatusList title="Afternoon drop-off" rows={today.data?.dropoff} />
+        </div>
+      )}
     </div>
   );
 }

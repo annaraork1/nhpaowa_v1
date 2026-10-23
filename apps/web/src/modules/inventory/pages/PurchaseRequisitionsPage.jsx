@@ -7,7 +7,12 @@ import {
 import { api } from '../api/client.js';
 import { IconButton } from '../components/IconButton.jsx';
 import { RowActions } from '../components/RowActions.jsx';
-import { EmptyState, PageHeader, StatusBadge } from '../components/ui.jsx';
+import {
+  PageHeader,
+  QueryStatus,
+  StatusBadge,
+  pendingLabel,
+} from '../components/ui.jsx';
 
 export default function PurchaseRequisitionsPage() {
   const qc = useQueryClient();
@@ -124,7 +129,7 @@ export default function PurchaseRequisitionsPage() {
         </label>
         <div className="md:col-span-2">
           <button className="btn-primary" type="submit" disabled={create.isPending}>
-            Create PR
+            {pendingLabel(create.isPending, 'Create PR', 'Creating…')}
           </button>
           {create.isError ? (
             <p className="mt-2 text-sm text-err">{create.error.message}</p>
@@ -132,9 +137,8 @@ export default function PurchaseRequisitionsPage() {
         </div>
       </form>
 
-      {(prs.data || []).length === 0 ? (
-        <EmptyState message="No purchase requisitions yet" />
-      ) : (
+      <QueryStatus query={prs} empty="No purchase requisitions yet" />
+      {prs.data?.length ? (
         <ul className="space-y-3">
           {(prs.data || []).map((pr) => (
             <li key={pr.id} className="panel">
@@ -214,6 +218,7 @@ export default function PurchaseRequisitionsPage() {
                       <IconButton
                         label="Convert to PO"
                         tone="brand"
+                        disabled={convert.isPending || cancel.isPending}
                         onClick={() => {
                           const el = document.getElementById(`sup-${pr.id}`);
                           const supplierId = el?.value;
@@ -229,6 +234,7 @@ export default function PurchaseRequisitionsPage() {
                       <IconButton
                         label="Cancel"
                         tone="danger"
+                        disabled={convert.isPending || cancel.isPending}
                         onClick={() => cancel.mutate(pr.id)}
                       >
                         <NoSymbolIcon className="h-5 w-5" />
@@ -243,7 +249,7 @@ export default function PurchaseRequisitionsPage() {
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
     </div>
   );
 }

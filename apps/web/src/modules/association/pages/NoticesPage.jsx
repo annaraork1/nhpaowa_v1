@@ -14,7 +14,12 @@ import {
   EntityCard,
   ResponsiveList,
 } from '../../inventory/components/ResponsiveList.jsx';
-import { EmptyState, PageHeader } from '../../inventory/components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+  pendingLabel,
+} from '../../inventory/components/ui.jsx';
 
 const CATEGORIES = ['Security', 'Compliance', 'General', 'Maintenance', 'Other'];
 
@@ -176,7 +181,10 @@ export default function NoticesPage() {
           </label>
           <div className="flex gap-2">
             <button type="submit" className="btn-primary" disabled={save.isPending}>
-              {editingId ? 'Save changes' : 'Save draft'}
+              {pendingLabel(
+                save.isPending,
+                editingId ? 'Save changes' : 'Save draft',
+              )}
             </button>
             <button
               type="button"
@@ -193,12 +201,14 @@ export default function NoticesPage() {
       ) : null}
 
       <div className="panel p-0">
-        {!list.isLoading && !(list.data || []).length ? (
-          <EmptyState message="No notices yet." />
-        ) : (list.data || []).length ? (
+        {!list.data?.length ? (
+          <div className="p-6">
+            <QueryStatus query={list} empty="No notices yet." />
+          </div>
+        ) : (
           <ResponsiveList
             className="p-3 md:p-0"
-            mobile={(list.data || []).map((n) => {
+            mobile={list.data.map((n) => {
               const noticeActions = (
                 <RowActions
                   resource="notices"
@@ -387,7 +397,7 @@ export default function NoticesPage() {
               </div>
             }
           />
-        ) : null}
+        )}
       </div>
 
       {selected ? (

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client.js';
-import { EmptyState, PageHeader } from '../components/ui.jsx';
+import { PageHeader, QueryStatus, pendingLabel } from '../components/ui.jsx';
 
 export default function AlertsPage() {
   const qc = useQueryClient();
@@ -13,9 +13,8 @@ export default function AlertsPage() {
   return (
     <div>
       <PageHeader title="Alerts" subtitle="Low stock, PO due, AMC, receipts, new suppliers" />
-      {!list.data?.length ? (
-        <EmptyState message="No alerts yet." />
-      ) : (
+      <QueryStatus query={list} empty="No alerts yet." />
+      {list.data?.length ? (
         <div className="space-y-3">
           {list.data.map((a) => (
             <div key={a.id} className={`panel ${a.isRead ? 'opacity-70' : ''}`}>
@@ -31,9 +30,10 @@ export default function AlertsPage() {
                   <button
                     type="button"
                     className="btn-ghost"
+                    disabled={mark.isPending}
                     onClick={() => mark.mutate(a.id)}
                   >
-                    Mark read
+                    {pendingLabel(mark.isPending, 'Mark read', 'Updating…')}
                   </button>
                 ) : (
                   <span className="text-xs text-muted">Read</span>
@@ -42,7 +42,7 @@ export default function AlertsPage() {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

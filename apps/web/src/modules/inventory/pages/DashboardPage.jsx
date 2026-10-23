@@ -104,6 +104,9 @@ export default function DashboardPage() {
     year: 'numeric',
   });
 
+  const dashLoading =
+    summary.isLoading || byCat.isLoading || top.isLoading || widgets.isLoading;
+
   return (
     <div className="space-y-5 text-ink">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -111,6 +114,12 @@ export default function DashboardPage() {
           <h2 className="text-lg font-bold text-ink">Dashboard</h2>
           <p className="text-sm text-muted">
             Inventory totals, charts, and stock alerts
+            {dashLoading ? (
+              <span className="ml-2 inline-flex items-center gap-1.5 text-brand">
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+                Updating…
+              </span>
+            ) : null}
           </p>
         </div>
         <div className="rounded-lg border border-line bg-panel px-3 py-1.5 text-sm text-muted shadow-sm">

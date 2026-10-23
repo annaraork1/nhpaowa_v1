@@ -4,7 +4,7 @@ import { api } from '../api/client.js';
 import { Can } from '../auth/Can.jsx';
 import { ItemSearchSelect } from '../components/ItemSearchSelect.jsx';
 import { StockTransactionsTable } from '../components/StockTransactionsTable.jsx';
-import { PageHeader, StatusBadge } from '../components/ui.jsx';
+import { PageHeader, StatusBadge, pendingLabel } from '../components/ui.jsx';
 
 export default function StockPage() {
   const qc = useQueryClient();
@@ -296,7 +296,11 @@ export default function StockPage() {
               type="submit"
               disabled={save.isPending || !form.itemId}
             >
-              Record {mode === 'IN' ? 'Stock In' : 'Stock Out'}
+              {pendingLabel(
+                save.isPending,
+                `Record ${mode === 'IN' ? 'Stock In' : 'Stock Out'}`,
+                'Recording…',
+              )}
             </button>
             {save.isError ? (
               <p className="text-sm text-err">{save.error.message}</p>

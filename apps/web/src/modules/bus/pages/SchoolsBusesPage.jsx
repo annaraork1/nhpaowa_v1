@@ -2,7 +2,11 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { busApi } from '../api.js';
 import { can } from '../../inventory/auth/permissions.js';
-import { EmptyState, PageHeader } from '../../inventory/components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+} from '../../inventory/components/ui.jsx';
 
 const blankSchool = {
   name: '',
@@ -429,53 +433,63 @@ export default function SchoolsBusesPage() {
       ) : null}
 
       {tab === 'schools' ? (
-        <div className="panel overflow-x-auto p-0">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-border text-muted">
-                <th className="px-3 py-2">Name</th>
-                <th className="px-3 py-2">Contact</th>
-                <th className="px-3 py-2">Phone</th>
-                <th className="px-3 py-2">Active</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(schools.data || []).map((s) => (
-                <tr key={s.id} className="border-b border-border/60">
-                  <td className="px-3 py-2 font-medium">{s.name}</td>
-                  <td className="px-3 py-2">{s.primaryContactName}</td>
-                  <td className="px-3 py-2">{s.primaryContactPhone}</td>
-                  <td className="px-3 py-2">{s.active ? 'Yes' : 'No'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <QueryStatus query={schools} empty="No schools yet." />
+          {schools.data?.length ? (
+            <div className="panel overflow-x-auto p-0">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border text-muted">
+                    <th className="px-3 py-2">Name</th>
+                    <th className="px-3 py-2">Contact</th>
+                    <th className="px-3 py-2">Phone</th>
+                    <th className="px-3 py-2">Active</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schools.data.map((s) => (
+                    <tr key={s.id} className="border-b border-border/60">
+                      <td className="px-3 py-2 font-medium">{s.name}</td>
+                      <td className="px-3 py-2">{s.primaryContactName}</td>
+                      <td className="px-3 py-2">{s.primaryContactPhone}</td>
+                      <td className="px-3 py-2">{s.active ? 'Yes' : 'No'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </>
       ) : (
-        <div className="panel overflow-x-auto p-0">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-border text-muted">
-                <th className="px-3 py-2">Vehicle</th>
-                <th className="px-3 py-2">School</th>
-                <th className="px-3 py-2">Driver</th>
-                <th className="px-3 py-2">Phone</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(buses.data || []).map((b) => (
-                <tr key={b.id} className="border-b border-border/60">
-                  <td className="px-3 py-2 font-medium">
-                    {b.vehicleRegistrationNumber}
-                  </td>
-                  <td className="px-3 py-2">{b.school?.name}</td>
-                  <td className="px-3 py-2">{b.driverName}</td>
-                  <td className="px-3 py-2">{b.driverPhone}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <QueryStatus query={buses} empty="No buses yet." />
+          {buses.data?.length ? (
+            <div className="panel overflow-x-auto p-0">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border text-muted">
+                    <th className="px-3 py-2">Vehicle</th>
+                    <th className="px-3 py-2">School</th>
+                    <th className="px-3 py-2">Driver</th>
+                    <th className="px-3 py-2">Phone</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {buses.data.map((b) => (
+                    <tr key={b.id} className="border-b border-border/60">
+                      <td className="px-3 py-2 font-medium">
+                        {b.vehicleRegistrationNumber}
+                      </td>
+                      <td className="px-3 py-2">{b.school?.name}</td>
+                      <td className="px-3 py-2">{b.driverName}</td>
+                      <td className="px-3 py-2">{b.driverPhone}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );

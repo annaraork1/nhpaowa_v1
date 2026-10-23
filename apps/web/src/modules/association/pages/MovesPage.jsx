@@ -18,7 +18,11 @@ import {
 import { api, mediaUrl } from '../../inventory/api/client.js';
 import { can } from '../../inventory/auth/permissions.js';
 import { IconButton } from '../../inventory/components/IconButton.jsx';
-import { EmptyState, PageHeader } from '../../inventory/components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+} from '../../inventory/components/ui.jsx';
 import { FlatSearchSelect } from '../components/FlatSearchSelect.jsx';
 import { getAuthUser } from '../../inventory/api/client.js';
 
@@ -700,7 +704,9 @@ export default function MovesPage() {
         <p className="mb-3 text-xs text-muted">
           Approved and in-progress moves scheduled for today (campus date).
         </p>
-        {!today.data?.length ? (
+        {today.isLoading ? (
+          <p className="text-sm text-muted">Loading today’s moves…</p>
+        ) : !today.data?.length ? (
           <p className="text-sm text-muted">No moves scheduled for today.</p>
         ) : (
           <div className="space-y-4">
@@ -714,15 +720,14 @@ export default function MovesPage() {
 
       <div className="panel">
         <h2 className="mb-3 text-base font-semibold text-ink">All requests</h2>
-        {!list.data?.length ? (
-          <EmptyState message="No move requests yet." />
-        ) : (
+        <QueryStatus query={list} empty="No move requests yet." />
+        {list.data?.length ? (
           <div className="space-y-4">
             {list.data.map((m) => (
               <MoveRow key={m.id} m={m} />
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

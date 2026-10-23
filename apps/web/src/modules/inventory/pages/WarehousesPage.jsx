@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client.js';
 import { Can } from '../auth/Can.jsx';
 import { RowActions } from '../components/RowActions.jsx';
-import { EmptyState, PageHeader } from '../components/ui.jsx';
+import { EmptyState, PageHeader, QueryStatus, pendingLabel } from '../components/ui.jsx';
 
 const blank = { code: '', name: '', address: '', isDefault: false };
 
@@ -85,7 +85,7 @@ export default function WarehousesPage() {
         </label>
         <div className="md:col-span-2">
           <button className="btn-primary" type="submit" disabled={save.isPending}>
-            Add warehouse
+            {pendingLabel(save.isPending, 'Add warehouse', 'Adding…')}
           </button>
           {save.isError ? (
             <p className="mt-2 text-sm text-err">{save.error.message}</p>
@@ -97,11 +97,10 @@ export default function WarehousesPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="panel">
           <h3 className="mb-3 font-semibold">Locations</h3>
-          {(warehouses.data || []).length === 0 ? (
-            <EmptyState message="No warehouses yet" />
-          ) : (
+          <QueryStatus query={warehouses} empty="No warehouses yet" />
+          {warehouses.data?.length ? (
             <ul className="space-y-2">
-              {(warehouses.data || []).map((w) => (
+              {warehouses.data.map((w) => (
                 <li
                   key={w.id}
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
@@ -149,19 +148,18 @@ export default function WarehousesPage() {
                 </li>
               ))}
             </ul>
-          )}
+          ) : null}
         </div>
         <div className="panel">
           <h3 className="mb-3 font-semibold">Stock at location</h3>
           {!selected ? (
             <p className="text-sm text-muted">Select a warehouse</p>
-          ) : stock.isLoading ? (
-            <p className="text-sm text-muted">Loading…</p>
-          ) : (stock.data || []).length === 0 ? (
-            <EmptyState message="No stock rows for this warehouse" />
           ) : (
+            <>
+              <QueryStatus query={stock} empty="No stock rows for this warehouse" />
+              {stock.data?.length ? (
             <ul className="space-y-2 text-sm">
-              {(stock.data || []).map((row) => (
+              {stock.data.map((row) => (
                 <li key={row.id} className="flex justify-between gap-2">
                   <span>{row.item?.name}</span>
                   <span>
@@ -170,6 +168,8 @@ export default function WarehousesPage() {
                 </li>
               ))}
             </ul>
+              ) : null}
+            </>
           )}
         </div>
       </div>

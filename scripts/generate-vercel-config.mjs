@@ -68,6 +68,8 @@ if (mode === 'vercel-fullstack') {
     $schema: 'https://openapi.vercel.sh/vercel.json',
     version: 2,
     framework: null,
+    // Prefer Asia region near Supabase ap-northeast-2 (Seoul); use icn1 if available.
+    regions: ['hnd1'],
     installCommand: 'npm ci',
     buildCommand: 'npm run vercel:build',
     outputDirectory: 'apps/web/dist',

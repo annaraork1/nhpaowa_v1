@@ -24,7 +24,11 @@ import {
   EntityCard,
   ResponsiveList,
 } from '../../inventory/components/ResponsiveList.jsx';
-import { EmptyState, PageHeader } from '../../inventory/components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+} from '../../inventory/components/ui.jsx';
 import { AlertDialog } from '../../inventory/components/AlertDialog.jsx';
 import { Modal } from '../../inventory/components/Modal.jsx';
 
@@ -1579,17 +1583,18 @@ export default function FlatsPage() {
         </Modal>
       ) : null}
 
-      {!flatsRows.length ? (
-        <EmptyState
-          message={
-            filtersActive
-              ? debouncedQ && flatsTotal === 0
-                ? 'This flat is not in the register.'
-                : 'No flats match your search or filters.'
-              : 'No flats registered yet.'
-          }
-        />
-      ) : (
+      <QueryStatus
+        query={list}
+        empty={
+          filtersActive
+            ? debouncedQ && flatsTotal === 0
+              ? 'This flat is not in the register.'
+              : 'No flats match your search or filters.'
+            : 'No flats registered yet.'
+        }
+        isEmpty={() => !flatsRows.length}
+      />
+      {flatsRows.length ? (
         <div className="panel overflow-hidden p-0">
           <ResponsiveList
             className="p-3 md:p-0"
@@ -1702,7 +1707,7 @@ export default function FlatsPage() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

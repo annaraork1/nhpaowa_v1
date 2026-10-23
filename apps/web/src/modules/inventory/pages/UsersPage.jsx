@@ -8,7 +8,12 @@ import {
   EntityCard,
   ResponsiveList,
 } from '../components/ResponsiveList.jsx';
-import { EmptyState, PageHeader } from '../components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+  pendingLabel,
+} from '../components/ui.jsx';
 import {
   ROLES,
   ROLE_LABELS,
@@ -316,7 +321,11 @@ export default function UsersPage() {
             ) : null}
             <div className="flex gap-2 md:col-span-2">
               <button className="btn-primary" type="submit" disabled={save.isPending}>
-                {editing ? 'Save changes' : 'Create user'}
+                {pendingLabel(
+                  save.isPending,
+                  editing ? 'Save changes' : 'Create user',
+                  editing ? 'Saving…' : 'Creating…',
+                )}
               </button>
               <button
                 type="button"
@@ -339,9 +348,11 @@ export default function UsersPage() {
         </Can>
       ) : null}
 
-      {!users.data?.length ? (
-        <EmptyState message="No users yet. Add the first account above." />
-      ) : (
+      <QueryStatus
+        query={users}
+        empty="No users yet. Add the first account above."
+      />
+      {users.data?.length ? (
         <div className="panel p-0">
           <ResponsiveList
             className="p-3 md:p-0"
@@ -459,7 +470,7 @@ export default function UsersPage() {
             }
           />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

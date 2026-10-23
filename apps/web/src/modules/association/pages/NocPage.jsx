@@ -12,7 +12,12 @@ import { formatFlatLabel } from '@nhpaowa/shared-ui';
 import { api, mediaUrl, getAuthUser } from '../../inventory/api/client.js';
 import { can } from '../../inventory/auth/permissions.js';
 import { IconButton } from '../../inventory/components/IconButton.jsx';
-import { EmptyState, PageHeader } from '../../inventory/components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+  pendingLabel,
+} from '../../inventory/components/ui.jsx';
 import { ASSOCIATION_BRAND, getBoardMembers, getPresident } from '../brand.js';
 import { FlatSearchSelect } from '../components/FlatSearchSelect.jsx';
 
@@ -272,12 +277,17 @@ export default function NocPage() {
             Maintenance dues cleared
           </label>
           <div className="flex gap-2 md:col-span-2">
-            <button type="submit" className="btn-primary">
-              Submit
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={create.isPending}
+            >
+              {pendingLabel(create.isPending, 'Submit', 'Submitting…')}
             </button>
             <button
               type="button"
               className="btn-ghost"
+              disabled={create.isPending}
               onClick={() => setOpen(false)}
             >
               Cancel
@@ -286,9 +296,8 @@ export default function NocPage() {
         </form>
       ) : null}
 
-      {!list.data?.length ? (
-        <EmptyState message="No NOC requests yet." />
-      ) : (
+      <QueryStatus query={list} empty="No NOC requests yet." />
+      {list.data?.length ? (
         <div className="panel space-y-4">
           {list.data.map((n) => (
             <div
@@ -466,7 +475,7 @@ export default function NocPage() {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
       <div className="hidden" ref={printRef}>
         {printNoc ? (

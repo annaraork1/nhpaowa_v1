@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { busApi } from '../api.js';
 import { can } from '../../inventory/auth/permissions.js';
-import { EmptyState, PageHeader } from '../../inventory/components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+  pendingLabel,
+} from '../../inventory/components/ui.jsx';
 
 const blankBatch = {
   label: '',
@@ -238,8 +243,12 @@ export default function BatchesSlotsPage() {
             />
           </label>
           <div className="flex gap-2 md:col-span-2">
-            <button type="submit" className="btn-primary">
-              Save batch
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={saveBatch.isPending}
+            >
+              {pendingLabel(saveBatch.isPending, 'Save batch')}
             </button>
             <button
               type="button"
@@ -319,8 +328,12 @@ export default function BatchesSlotsPage() {
             />
           </label>
           <div className="flex gap-2 md:col-span-2">
-            <button type="submit" className="btn-primary">
-              Save slot
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={saveSlot.isPending}
+            >
+              {pendingLabel(saveSlot.isPending, 'Save slot')}
             </button>
             <button
               type="button"
@@ -333,6 +346,7 @@ export default function BatchesSlotsPage() {
         </form>
       ) : null}
 
+      <QueryStatus query={batches} empty="No batches yet." />
       <div className="space-y-4">
         {(batches.data || []).map((b) => (
           <div key={b.id} className="panel">

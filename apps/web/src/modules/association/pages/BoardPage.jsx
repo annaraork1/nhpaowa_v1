@@ -7,7 +7,11 @@ import {
   EntityCard,
   ResponsiveList,
 } from '../../inventory/components/ResponsiveList.jsx';
-import { EmptyState, PageHeader } from '../../inventory/components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+} from '../../inventory/components/ui.jsx';
 
 const blankRole = {
   name: '',
@@ -518,12 +522,14 @@ export default function BoardPage() {
         </div>
       ) : (
         <div className="panel p-0">
-          {!members.isLoading && !(members.data || []).length ? (
-            <EmptyState message="No board members yet." />
-          ) : (members.data || []).length ? (
+          {!members.data?.length ? (
+            <div className="p-6">
+              <QueryStatus query={members} empty="No board members yet." />
+            </div>
+          ) : (
             <ResponsiveList
               className="p-3 md:p-0"
-              mobile={(members.data || []).map((m) => {
+              mobile={members.data.map((m) => {
                 const memberActions = (
                   <RowActions
                     resource="board"
@@ -657,7 +663,7 @@ export default function BoardPage() {
                 </div>
               }
             />
-          ) : null}
+          )}
         </div>
       )}
     </div>

@@ -43,6 +43,10 @@ import NoticesPage from './modules/association/pages/NoticesPage.jsx';
 import BoardPage from './modules/association/pages/BoardPage.jsx';
 import ResidentHomePage from './modules/association/pages/ResidentHomePage.jsx';
 import { PwaInstallBanner } from './modules/inventory/components/PwaInstallBanner.jsx';
+import {
+  GlobalProgress,
+  GlobalProgressBanner,
+} from './modules/inventory/components/GlobalProgress.jsx';
 import GatePage from './modules/bus/pages/GatePage.jsx';
 import SchoolsBusesPage from './modules/bus/pages/SchoolsBusesPage.jsx';
 import BatchesSlotsPage from './modules/bus/pages/BatchesSlotsPage.jsx';
@@ -370,7 +374,8 @@ function Shell() {
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="app-topbar sticky top-0 z-20 border-b border-line px-4 py-3 md:px-6">
+        <header className="app-topbar relative sticky top-0 z-20 border-b border-line px-4 py-3 md:px-6">
+          <GlobalProgress />
           <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
             <IconButton
               label="Open menu"
@@ -484,19 +489,37 @@ export default function App() {
   if (location.pathname === '/login') {
     return (
       <AuthGate>
-        <LoginPage />
+        <div className="flex min-h-screen flex-col">
+          <GlobalProgressBanner />
+          <LoginPage />
+        </div>
       </AuthGate>
     );
   }
 
   if (location.pathname === '/flat-update') {
-    return <FlatUpdatePage />;
+    return (
+      <div className="flex min-h-screen flex-col">
+        <GlobalProgressBanner />
+        <FlatUpdatePage />
+      </div>
+    );
   }
   if (location.pathname === '/flat-update/share') {
-    return <FlatUpdateSharePage />;
+    return (
+      <div className="flex min-h-screen flex-col">
+        <GlobalProgressBanner />
+        <FlatUpdateSharePage />
+      </div>
+    );
   }
   if (location.pathname === '/flat-update/paper') {
-    return <FlatPaperFormPage />;
+    return (
+      <div className="flex min-h-screen flex-col">
+        <GlobalProgressBanner />
+        <FlatPaperFormPage />
+      </div>
+    );
   }
 
   if (!token) {

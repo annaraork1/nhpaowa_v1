@@ -9,7 +9,12 @@ import {
   EntityCard,
   ResponsiveList,
 } from '../components/ResponsiveList.jsx';
-import { EmptyState, PageHeader, StatusBadge } from '../components/ui.jsx';
+import {
+  PageHeader,
+  QueryStatus,
+  StatusBadge,
+  pendingLabel,
+} from '../components/ui.jsx';
 
 const blank = {
   itemId: '',
@@ -164,9 +169,14 @@ export default function AmcPage() {
           </label>
           <div className="md:col-span-2 flex gap-2">
             <button className="btn-primary" type="submit" disabled={save.isPending}>
-              Save
+              {pendingLabel(save.isPending, 'Save')}
             </button>
-            <button className="btn-ghost" type="button" onClick={() => setOpen(false)}>
+            <button
+              className="btn-ghost"
+              type="button"
+              disabled={save.isPending}
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </button>
             {save.isError ? (
@@ -176,9 +186,8 @@ export default function AmcPage() {
         </form>
       ) : null}
 
-      {!list.data?.length ? (
-        <EmptyState message="No AMC contracts yet." />
-      ) : (
+      <QueryStatus query={list} empty="No AMC contracts yet." />
+      {list.data?.length ? (
         <div className="panel p-0">
           <ResponsiveList
             className="p-3 md:p-0"
@@ -393,7 +402,7 @@ export default function AmcPage() {
             }
           />
         </div>
-      )}
+      ) : null}
 
       {renewId ? (
         <form
@@ -415,10 +424,19 @@ export default function AmcPage() {
             />
           </label>
           <div className="flex gap-2">
-            <button className="btn-primary" type="submit">
-              Confirm renew
+            <button
+              className="btn-primary"
+              type="submit"
+              disabled={renew.isPending}
+            >
+              {pendingLabel(renew.isPending, 'Confirm renew', 'Renewing…')}
             </button>
-            <button className="btn-ghost" type="button" onClick={() => setRenewId(null)}>
+            <button
+              className="btn-ghost"
+              type="button"
+              disabled={renew.isPending}
+              onClick={() => setRenewId(null)}
+            >
               Cancel
             </button>
           </div>

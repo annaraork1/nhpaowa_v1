@@ -7,7 +7,7 @@ import {
   EntityCard,
   ResponsiveList,
 } from '../components/ResponsiveList.jsx';
-import { EmptyState, PageHeader, inr } from '../components/ui.jsx';
+import { PageHeader, QueryStatus, pendingLabel, inr } from '../components/ui.jsx';
 
 const blank = {
   name: '',
@@ -79,19 +79,27 @@ export default function SuppliersPage() {
             </label>
           ))}
           <div className="flex gap-2 md:col-span-2">
-            <button className="btn-primary" type="submit">
-              Save
+            <button
+              className="btn-primary"
+              type="submit"
+              disabled={save.isPending}
+            >
+              {pendingLabel(save.isPending, 'Save')}
             </button>
-            <button className="btn-ghost" type="button" onClick={() => setOpen(false)}>
+            <button
+              className="btn-ghost"
+              type="button"
+              disabled={save.isPending}
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </button>
           </div>
         </form>
       ) : null}
 
-      {!list.data?.length ? (
-        <EmptyState message="No suppliers yet." />
-      ) : (
+      <QueryStatus query={list} empty="No suppliers yet." />
+      {list.data?.length ? (
         <div className="panel p-0">
           <ResponsiveList
             className="p-3 md:p-0"
@@ -232,7 +240,7 @@ export default function SuppliersPage() {
             }
           />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

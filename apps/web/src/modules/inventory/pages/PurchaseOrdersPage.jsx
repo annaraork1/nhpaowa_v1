@@ -17,7 +17,13 @@ import {
   EntityCard,
   ResponsiveList,
 } from '../components/ResponsiveList.jsx';
-import { EmptyState, PageHeader, StatusBadge, inr } from '../components/ui.jsx';
+import {
+  PageHeader,
+  QueryStatus,
+  StatusBadge,
+  inr,
+  pendingLabel,
+} from '../components/ui.jsx';
 
 export default function PurchaseOrdersPage() {
   const qc = useQueryClient();
@@ -236,9 +242,14 @@ export default function PurchaseOrdersPage() {
               Add line
             </button>
             <button className="btn-primary" type="submit" disabled={create.isPending}>
-              Create draft
+              {pendingLabel(create.isPending, 'Create draft', 'Creating…')}
             </button>
-            <button className="btn-ghost" type="button" onClick={() => setOpen(false)}>
+            <button
+              className="btn-ghost"
+              type="button"
+              disabled={create.isPending}
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </button>
             {create.isError ? (
@@ -252,7 +263,7 @@ export default function PurchaseOrdersPage() {
         <div className="panel p-0">
           {!pos.data?.length ? (
             <div className="p-6">
-              <EmptyState message="No purchase orders yet." />
+              <QueryStatus query={pos} empty="No purchase orders yet." />
             </div>
           ) : (
             <ResponsiveList
@@ -445,6 +456,7 @@ export default function PurchaseOrdersPage() {
                   <IconButton
                     label="Submit"
                     tone="brand"
+                    disabled={action.isPending}
                     onClick={() =>
                       action.mutate({ id: detail.id, type: 'submit' })
                     }
@@ -456,6 +468,7 @@ export default function PurchaseOrdersPage() {
                   <IconButton
                     label="Approve"
                     tone="brand"
+                    disabled={action.isPending}
                     onClick={() =>
                       action.mutate({ id: detail.id, type: 'approve' })
                     }
@@ -467,6 +480,7 @@ export default function PurchaseOrdersPage() {
                   <IconButton
                     label="Post-approve emergency"
                     tone="brand"
+                    disabled={action.isPending}
                     onClick={() =>
                       action.mutate({ id: detail.id, type: 'postApprove' })
                     }
@@ -478,6 +492,7 @@ export default function PurchaseOrdersPage() {
                   <IconButton
                     label="Mark ordered"
                     tone="brand"
+                    disabled={action.isPending}
                     onClick={() =>
                       action.mutate({ id: detail.id, type: 'order' })
                     }
@@ -489,6 +504,7 @@ export default function PurchaseOrdersPage() {
                   <IconButton
                     label="Receive remaining"
                     tone="brand"
+                    disabled={action.isPending}
                     onClick={() =>
                       action.mutate({
                         id: detail.id,
@@ -514,6 +530,7 @@ export default function PurchaseOrdersPage() {
                 {detail.status === 'RECEIVED' ? (
                   <IconButton
                     label="Close"
+                    disabled={action.isPending}
                     onClick={() =>
                       action.mutate({ id: detail.id, type: 'close' })
                     }
@@ -525,6 +542,7 @@ export default function PurchaseOrdersPage() {
                   <IconButton
                     label="Cancel"
                     tone="danger"
+                    disabled={action.isPending}
                     onClick={() =>
                       action.mutate({ id: detail.id, type: 'cancel' })
                     }
@@ -532,10 +550,20 @@ export default function PurchaseOrdersPage() {
                     <NoSymbolIcon className="h-5 w-5" />
                   </IconButton>
                 ) : null}
-                <IconButton label="Dismiss" onClick={() => setSelected(null)}>
+                <IconButton
+                  label="Dismiss"
+                  disabled={action.isPending}
+                  onClick={() => setSelected(null)}
+                >
                   <XMarkIcon className="h-5 w-5" />
                 </IconButton>
               </div>
+              {action.isPending ? (
+                <p className="text-sm text-muted">Processing…</p>
+              ) : null}
+              {action.isError ? (
+                <p className="text-sm text-err">{action.error.message}</p>
+              ) : null}
               {action.isError ? (
                 <p className="text-sm text-err">{action.error.message}</p>
               ) : null}

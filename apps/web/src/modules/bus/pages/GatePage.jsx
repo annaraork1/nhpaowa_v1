@@ -2,7 +2,11 @@ import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { busApi } from '../api.js';
 import { can } from '../../inventory/auth/permissions.js';
-import { EmptyState, PageHeader } from '../../inventory/components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+} from '../../inventory/components/ui.jsx';
 
 export default function GatePage() {
   const qc = useQueryClient();
@@ -267,8 +271,12 @@ export default function GatePage() {
               );
             })}
           </div>
-          {!rows.length && !today.isLoading ? (
-            <EmptyState message="No active buses for this direction." />
+          {!rows.length ? (
+            <QueryStatus
+              query={today}
+              empty="No active buses for this direction."
+              isEmpty={() => !rows.length}
+            />
           ) : null}
         </>
       )}

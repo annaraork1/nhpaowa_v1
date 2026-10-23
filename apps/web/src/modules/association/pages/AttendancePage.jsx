@@ -22,7 +22,12 @@ import {
   StickyScrollTable,
   stickyColClass,
 } from '../../inventory/components/ResponsiveList.jsx';
-import { EmptyState, PageHeader } from '../../inventory/components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+  pendingLabel,
+} from '../../inventory/components/ui.jsx';
 
 const blankStaff = {
   name: '',
@@ -923,7 +928,11 @@ export default function AttendancePage() {
               className="btn-primary"
               disabled={saveStaff.isPending || photoUploading}
             >
-              Save
+              {pendingLabel(
+                saveStaff.isPending || photoUploading,
+                'Save',
+                photoUploading ? 'Uploading…' : 'Saving…',
+              )}
             </button>
             <button
               type="button"
@@ -1075,12 +1084,17 @@ export default function AttendancePage() {
           <h2 className="mb-3 px-3 pt-3 text-sm font-semibold md:px-4 md:pt-4">
             Staff roster
           </h2>
-          {!staff.isLoading && !(staff.data || []).length ? (
-            <EmptyState message="No staff yet — add one or import CSV." />
-          ) : (staff.data || []).length ? (
+          {!staff.data?.length ? (
+            <div className="p-6">
+              <QueryStatus
+                query={staff}
+                empty="No staff yet — add one or import CSV."
+              />
+            </div>
+          ) : (
             <ResponsiveList
               className="px-3 pb-3 md:p-0 md:pb-0"
-              mobile={(staff.data || []).map((s) => {
+              mobile={staff.data.map((s) => {
                 const st = staffDayState(s);
                 return (
                   <EntityCard
@@ -1174,7 +1188,7 @@ export default function AttendancePage() {
                 </div>
               }
             />
-          ) : null}
+          )}
         </div>
       ) : null}
 

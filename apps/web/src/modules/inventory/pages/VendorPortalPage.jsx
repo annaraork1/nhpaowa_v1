@@ -1,7 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client.js';
 import { RowActions } from '../components/RowActions.jsx';
-import { EmptyState, PageHeader, StatusBadge, inr } from '../components/ui.jsx';
+import {
+  EmptyState,
+  PageHeader,
+  QueryStatus,
+  StatusBadge,
+  inr,
+} from '../components/ui.jsx';
 
 export default function VendorPortalPage() {
   const me = useQuery({ queryKey: ['vendor', 'me'], queryFn: api.vendor.me });
@@ -33,11 +39,11 @@ export default function VendorPortalPage() {
         )}
       </div>
 
-      {pos.isError ? (
-        <EmptyState message={pos.error.message} />
-      ) : (pos.data || []).length === 0 ? (
-        <EmptyState message="No purchase orders for your supplier yet" />
-      ) : (
+      <QueryStatus
+        query={pos}
+        empty="No purchase orders for your supplier yet"
+      />
+      {pos.data?.length ? (
         <ul className="space-y-3">
           {(pos.data || []).map((po) => (
             <li key={po.id} className="panel">
@@ -98,7 +104,7 @@ export default function VendorPortalPage() {
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
     </div>
   );
 }
